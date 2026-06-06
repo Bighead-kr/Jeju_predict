@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+numpy
+pandas
+torch
+faiss-cpu
+networkx
+scikit-learn
+torchvision
+python-multipart
