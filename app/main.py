@@ -1,10 +1,13 @@
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import numpy as np
-import os
 
 from app.agent import JejuPredictAgent
 from app.services.explainer import ExplainerService
