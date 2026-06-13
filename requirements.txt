@@ -9,3 +9,5 @@ networkx
 scikit-learn
 torchvision
 python-multipart
+anthropic        
+python-dotenv 
