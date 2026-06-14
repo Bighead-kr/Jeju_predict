@@ -373,7 +373,7 @@
 
                         <div class="space-y-2">
                             <span class="text-[9px] text-[#777169] font-bold block uppercase tracking-wider">AI 일별 분석</span>
-                            <div class="bg-[#f5f5f5] border border-[#e7e5e4] p-4 rounded-xl leading-relaxed text-xs text-[#4e4e4e]" id="cal-info-ai">
+                            <div class="bg-[#f5f5f5] border border-[#e7e5e4] p-4 rounded-xl leading-relaxed text-xs text-[#4e4e4e] whitespace-pre-line" id="cal-info-ai">
                                 구름량 감소와 평이한 풍속 조건으로 인해 평소보다 신재생 발전량이 대폭 증가할 것으로 판단됩니다.
                             </div>
                         </div>
@@ -739,8 +739,21 @@
             document.getElementById('cal-month-title').textContent = `${currentYear}년 ${currentMonth}월 발전 예보 스케줄러`;
             document.getElementById('cal-month-display').textContent = `${currentMonth}월 (${getMonthEnglishName(currentMonth)})`;
             renderCalendar();
-            // 월 변경 시 1일로 기본 선택
-            selectCalendarDay(1, '보통', '보통');
+            // 월 변경 시 날짜를 자동 선택하지 않고, 사용자가 직접 선택하도록 초기화
+            clearCalendarSelection();
+        }
+
+        // 캘린더 선택 해제 및 정보 패널 초기화 (월 변경 직후 상태)
+        function clearCalendarSelection() {
+            selectedDayNum = null;
+            document.getElementById('cal-date-title').textContent = '날짜를 선택하세요';
+            document.getElementById('cal-info-solar-val').textContent = '- MW';
+            document.getElementById('cal-info-wind-val').textContent = '- MW';
+            document.getElementById('cal-info-generation').textContent = '- MW';
+            document.getElementById('cal-info-solar').textContent = '- MJ/m²';
+            document.getElementById('cal-info-weather').textContent = '-';
+            document.getElementById('cal-info-ai').textContent = '날짜를 선택하면 해당 일의 AI 발전량 분석이 표시됩니다.';
+            document.getElementById('cal-refinement-badge').classList.add('hidden');
         }
 
         function getMonthEnglishName(m) {
@@ -848,7 +861,27 @@
         }
 
         // 캘린더 개별 일자 클릭 핸들러 (실제 API 연동을 통한 예측치 및 재예측 범위 동적 갱신)
+        // AI 분석 텍스트를 가독성 좋게 정리 (마크다운 제거 + 아이콘 기준 항목별 줄바꿈)
+        function formatAiNarrative(text) {
+            if (!text) return '';
+            let t = text
+                .replace(/\*\*/g, '')           // 볼드 마크다운 제거
+                .replace(/`/g, '')              // 인라인 코드 백틱 제거
+                .replace(/^#{1,6}\s*/gm, '')    // 헤더(#, ##, ###) 기호 제거
+                .replace(/^[-*]\s*/gm, '• ');   // 리스트 마커를 불릿으로 통일
+            // 섹션 아이콘 앞에서 줄바꿈하여 항목별로 분리
+            t = t.replace(/\s*(📊|☀️|💨|📚|📐|🎯|🔁|🌪️)/g, '\n$1');
+            return t
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0)  // 빈 줄 제거
+                .join('\n')
+                .trim();
+        }
+
         async function selectCalendarDay(day, solarStatus, windStatus) {
+            // 선택된 날짜가 없으면(월 변경 직후 등) 동작하지 않음
+            if (!day) return;
             selectedDayNum = day;
             selectedSolarStatus = solarStatus;
             selectedWindStatus = windStatus;
@@ -888,6 +921,17 @@
                 const report = data.report;
                 const explanation = data.explanation;
 
+                // report가 없으면(예: 데이터 범위 밖) 안내 메시지 노출 후 종료
+                if (!report || !report.predictions) {
+                    document.getElementById('cal-info-ai').textContent =
+                        data.answer || '해당 날짜의 발전량 데이터를 분석할 수 없습니다.';
+                    document.getElementById('cal-info-solar-val').textContent = '- MW';
+                    document.getElementById('cal-info-wind-val').textContent = '- MW';
+                    document.getElementById('cal-info-generation').textContent = '- MW';
+                    document.getElementById('cal-refinement-badge').classList.add('hidden');
+                    return;
+                }
+
                 const solarGen = report.predictions.solar_mw;
                 const windGen = report.predictions.wind_mw;
                 const totalGen = solarGen + windGen;
@@ -902,8 +946,7 @@
                 }
 
                 let aiText = explanation ? (explanation.full_narrative || explanation.solar_explanation) : data.answer;
-                // ** 마크다운 제거
-                aiText = aiText.replace(/\*\*/g, '');
+                aiText = formatAiNarrative(aiText);
 
                 document.getElementById('cal-info-solar-val').textContent = `${solarGen.toFixed(2)} MW`;
                 document.getElementById('cal-info-wind-val').textContent = `${windGen.toFixed(2)} MW`;
@@ -1370,7 +1413,7 @@
                 });
                 if (!response.ok) throw new Error('API 오류');
                 const data = await response.json();
-                const answer = data.answer.replace(/\*\*/g, '').replace(/\n/g, '<br>');
+                const answer = formatAiNarrative(data.answer).replace(/\n/g, '<br>');
                 document.getElementById(loadId).innerHTML = answer;
                 document.getElementById(loadId).className = 'bg-[#f0efed] text-[#292524] text-[10px] px-2.5 py-1.5 rounded-2xl rounded-tl-none max-w-[85%] break-words leading-relaxed';
             } catch (err) {
