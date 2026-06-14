@@ -99,6 +99,84 @@ async def predict_with_explanation(input_data: WeatherInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/daily_data", summary="하루 전체 발전량 정보 (실적 또는 예측)")
+async def get_daily_data(date: str):
+    """
+    날짜(YYYY-MM-DD)를 입력받아 하루 종합 태양광/풍력 합 및 시간대별 예측/실적 목록을 반환합니다.
+    """
+    try:
+        from datetime import datetime
+        dt = datetime.strptime(date, "%Y-%m-%d")
+        
+        # 1. 실제 실적 데이터 조회 시도 (CSV 최대 날짜 이전인지 확인)
+        is_actual = dt <= agentic_chat.actual_cutoff
+        
+        if is_actual and agentic_chat._df is not None:
+            # CSV 데이터 조회
+            day_data = agentic_chat._df[agentic_chat._df["date"].dt.date == dt.date()]
+            if not day_data.empty:
+                solar_sum = float(day_data["solar_mw"].sum())
+                wind_sum = float(day_data["wind_mw"].sum())
+                # 시간대별 상세
+                hourly = []
+                for _, row in day_data.iterrows():
+                    hourly.append({
+                        "hour": f"{int(row['hour']):02d}",
+                        "solar_mw": float(row["solar_mw"]),
+                        "wind_mw": float(row["wind_mw"]),
+                    })
+                return {
+                    "status": "ok",
+                    "date": date,
+                    "is_actual": True,
+                    "solar_sum": solar_sum,
+                    "wind_sum": wind_sum,
+                    "total_sum": solar_sum + wind_sum,
+                    "hourly": hourly,
+                    "warnings": []
+                }
+        
+        # 2. 미래 데이터이거나 CSV에 없는 경우 예측 수행 (0시~23시)
+        solar_sum = 0.0
+        wind_sum = 0.0
+        hourly = []
+        warnings = set()
+        
+        for h in range(24):
+            ts = f"{date} {h:02d}:00:00"
+            window = agentic_chat._build_window(ts)
+            # 자율 재예측 루프 포함한 예측 레포트 생성
+            report = agent.run_pipeline_with_refinement(window, timestamp=ts)
+            solar = report["predictions"]["solar_mw"]
+            wind = report["predictions"]["wind_mw"]
+            solar_sum += solar
+            wind_sum += wind
+            
+            if report.get("warnings"):
+                for w in report["warnings"]:
+                    warnings.add(w)
+            
+            hourly.append({
+                "hour": f"{h:02d}",
+                "solar_mw": solar,
+                "wind_mw": wind,
+            })
+            
+        return {
+            "status": "ok",
+            "date": date,
+            "is_actual": False,
+            "solar_sum": solar_sum,
+            "wind_sum": wind_sum,
+            "total_sum": solar_sum + wind_sum,
+            "hourly": hourly,
+            "warnings": list(warnings)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/chat", summary="멀티스텝 대화형 에이전트 질의응답 (#3)")
 async def chat_interaction(chat_data: ChatInput):
     """
