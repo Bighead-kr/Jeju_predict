@@ -49,9 +49,14 @@ class JejuPredictAgent:
             if os.path.exists(feature_scaler_path):
                 with open(feature_scaler_path, "rb") as f:
                     self.feature_scaler = pickle.load(f)
+                # numpy array 입력 시 발생하는 feature-name 불일치 경고 방지
+                if hasattr(self.feature_scaler, "feature_names_in_"):
+                    del self.feature_scaler.feature_names_in_
             if os.path.exists(target_scaler_path):
                 with open(target_scaler_path, "rb") as f:
                     self.target_scaler = pickle.load(f)
+                if hasattr(self.target_scaler, "feature_names_in_"):
+                    del self.target_scaler.feature_names_in_
             print("MinMaxScaler objects loaded successfully.")
         except Exception as e:
             print(f"Warning: Scalers could not be loaded: {e}")

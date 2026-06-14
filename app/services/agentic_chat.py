@@ -35,6 +35,9 @@ SYSTEM_PROMPT = """당신은 제주도 신재생에너지 발전량 예측 시�
 
 
 class AgenticChatService:
+    # 실제 데이터의 마지막 시점 (이 날짜까지는 실측, 이후는 예측)
+    DEFAULT_ACTUAL_CUTOFF = datetime(2025, 12, 31, 23, 59, 59)
+
     def __init__(self, agent, explainer):
         self.agent    = agent
         self.explainer = explainer
@@ -43,6 +46,12 @@ class AgenticChatService:
         self.last_timestamp = None
         self.last_window    = None
         self._df = self._load_csv()
+        # 실측/예측 경계: CSV 마지막 날짜의 23:59:59 (없으면 기본값 2025-12-31)
+        if self._df is not None and not self._df.empty:
+            self.actual_cutoff = datetime.combine(self._df["date"].max().date(),
+                                                  datetime.max.time())
+        else:
+            self.actual_cutoff = self.DEFAULT_ACTUAL_CUTOFF
 
     def _load_csv(self) -> Optional[pd.DataFrame]:
         try:
@@ -69,7 +78,8 @@ class AgenticChatService:
                   {"tool": "time_parser",        "result": timestamp}]
 
         report, explanation, actual, compare_result = None, None, None, None
-        is_past = self._is_past(timestamp)
+        # 실측/예측 경계: 2025-12-31 이전(이하)은 실측 조회, 이후는 LSTM 예측
+        is_actual_period = self._is_within_actual(timestamp)
 
         # 인사·도움말은 바로 답변
         if set(intents) <= {"greet", "help"}:
@@ -77,9 +87,9 @@ class AgenticChatService:
             self._push_history(message, answer)
             return {"answer": answer, "tool_trace": trace, "report": None, "explanation": None}
 
-        # Step A: 과거 → CSV / 미래 → LSTM
+        # Step A: 실측 기간(~2025-12-31) → CSV / 이후 → LSTM 예측
         if any(i in intents for i in ["predict","explain","compare","risk","lookup"]):
-            if is_past:
+            if is_actual_period:
                 actual, t = self._tool_lookup(timestamp); trace.append(t)
                 if actual:
                     report = {"predictions": {"solar_mw": actual["solar_mw"],
@@ -87,7 +97,9 @@ class AgenticChatService:
                               "confidence": "High", "warnings": [], "similar_cases": [],
                               "kg_context": {"events":[], "rules":[]},
                               "trigger_active": False, "is_actual": True}
-            else:
+            # 실측 기간 밖이거나 실측 데이터가 없으면 예측으로 폴백
+            if report is None:
+                actual = None
                 window = self._build_window(timestamp)
                 self.last_window = window
                 report, t = self._tool_predict(window, timestamp); trace.append(t)
@@ -264,6 +276,13 @@ class AgenticChatService:
     def _is_past(self, ts: str) -> bool:
         try: return datetime.strptime(ts[:19], "%Y-%m-%d %H:%M:%S") < datetime.now()
         except: return False
+
+    def _is_within_actual(self, ts: str) -> bool:
+        """실측 데이터 경계(2025-12-31) 이내 여부 → True면 실측 조회, False면 예측"""
+        try:
+            return datetime.strptime(ts[:10], "%Y-%m-%d") <= self.actual_cutoff
+        except:
+            return False
 
     def _parse_ts(self, text: str) -> str:
         now = datetime.now()
