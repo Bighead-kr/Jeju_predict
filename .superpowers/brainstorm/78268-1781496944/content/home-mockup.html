@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관제 홈 목업</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  /* ── 전체 브라우저 창 프레임 ── */
+  .browser-frame {
+    width: 100%;
+    max-width: 1160px;
+    background: #0a0a0a;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  /* ── 네비게이션 바 ── */
+  .nav {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    height: 48px;
+    border-bottom: 1px solid #1a1a1a;
+    background: #0a0a0a;
+    gap: 16px;
+  }
+  .nav-logo {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-logo-dot {
+    width: 20px; height: 20px;
+    background: #e05a2b;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 900; color: #fff;
+  }
+  .nav-subtitle { font-size: 11px; color: #444; font-weight: 400; margin-left: 4px; }
+  .nav-time { font-size: 10px; color: #333; font-family: monospace; }
+
+  .nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0 auto;
+    background: #141414;
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .nav-tab {
+    font-size: 11px;
+    font-weight: 500;
+    color: #555;
+    padding: 5px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .nav-tab.active {
+    background: #1e1e1e;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-input {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 10px;
+    color: #666;
+    font-family: monospace;
+  }
+  .nav-btn {
+    background: #e05a2b;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── 상태 바 ── */
+  .status-bar {
+    height: 28px;
+    background: #0f0f0f;
+    border-bottom: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 8px;
+    font-size: 10px;
+    color: #444;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    background: #22c55e;
+    border-radius: 50%;
+  }
+  .status-sep { color: #222; }
+  .status-label { color: #22c55e; }
+
+  /* ── 메인 콘텐츠 영역 ── */
+  .main {
+    display: flex;
+    flex-direction: column;
+    background: #0a0a0a;
+  }
+
+  /* ── 히어로 섹션 (검은 배경) ── */
+  .hero-section {
+    padding: 28px 24px 24px;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 메인 히어로 카드 */
+  .hero-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* 총 발전량 히어로 */
+  .hero-total {
+    background: #111;
+    border-radius: 12px;
+    padding: 22px 24px;
+    border: 1px solid #1e1e1e;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-total::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(224,90,43,0.12) 0%, transparent 70%);
+  }
+  .hero-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .hero-expand { color: #333; font-size: 12px; }
+  .hero-val {
+    font-size: 56px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .hero-unit {
+    font-size: 18px;
+    font-weight: 400;
+    color: #444;
+    margin-left: 4px;
+  }
+  .hero-sub {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .hero-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #555;
+  }
+  .hero-sub-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+  }
+  .hero-sub-val { color: #ccc; font-weight: 600; }
+
+  /* 미니 차트 영역 */
+  .hero-chart-area {
+    margin-top: 16px;
+    height: 48px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+  }
+  .hero-bar {
+    flex: 1;
+    background: #1e1e1e;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+  .hero-bar.active { background: #e05a2b; }
+  .hero-bar.moderate { background: #2a2a2a; }
+
+  /* 에이전트 상태 카드 */
+  .hero-agent {
+    background: #111;
+    border-radius: 12px;
+    padding: 22px 24px;
+    border: 1px solid #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .agent-status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .agent-dot {
+    width: 8px; height: 8px; background: #22c55e; border-radius: 50%;
+  }
+  .agent-label { font-size: 13px; font-weight: 700; color: #ddd; }
+  .agent-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .agent-metric {
+    background: #0a0a0a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid #1e1e1e;
+  }
+  .agent-metric-label { font-size: 9px; color: #333; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .agent-metric-val { font-size: 16px; font-weight: 700; color: #ccc; }
+  .agent-schedule {
+    font-size: 10px;
+    color: #333;
+    border-top: 1px solid #1a1a1a;
+    padding-top: 10px;
+  }
+  .agent-schedule span { color: #e05a2b; font-weight: 600; }
+
+  /* ── 메트릭 카드 섹션 (밝은 배경) ── */
+  .metrics-section {
+    background: #efefed;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* 차트 행 */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 10px;
+  }
+
+  .metric-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    border: 1px solid rgba(0,0,0,0.06);
+    position: relative;
+  }
+  .metric-card-sm {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+
+  .mc-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .mc-expand { color: #ccc; font-size: 11px; }
+  .mc-val {
+    font-size: 36px;
+    font-weight: 800;
+    color: #111;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .mc-val-sm {
+    font-size: 24px;
+    font-weight: 800;
+    color: #111;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .mc-unit { font-size: 14px; font-weight: 400; color: #aaa; }
+  .mc-unit-sm { font-size: 12px; font-weight: 400; color: #aaa; }
+
+  .mc-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+  }
+  .mc-legend-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+  }
+  .mc-legend-left { display: flex; align-items: center; gap: 6px; }
+  .mc-legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .mc-legend-val { font-size: 12px; font-weight: 600; color: #333; }
+
+  /* 차트 영역 */
+  .mc-chart {
+    margin-top: 12px;
+    height: 64px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    position: relative;
+  }
+  .mc-chart-bar {
+    flex: 1;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+  }
+
+  .mc-progress {
+    margin-top: 10px;
+    height: 3px;
+    background: #f0f0f0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .mc-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+  .mc-progress-label {
+    font-size: 10px;
+    color: #bbb;
+    margin-top: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .mc-sep { color: #eee; }
+
+  /* 하단 4열 그리드 */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  /* 설명 에이전트 패널 */
+  .explain-panel {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .explain-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .explain-header-left { display: flex; align-items: center; gap: 8px; }
+  .explain-label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.08em; }
+  .explain-badge { font-size: 9px; padding: 2px 8px; border-radius: 10px; background: #f5f5f5; color: #aaa; border: 1px solid #eee; }
+  .explain-body {
+    padding: 14px 16px;
+    display: flex;
+    gap: 14px;
+  }
+  .explain-col { flex: 1; }
+  .explain-var {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .explain-var-bar { height: 4px; border-radius: 2px; background: #e05a2b; }
+  .explain-var-label { font-size: 10px; color: #888; }
+  .explain-var-val { font-size: 10px; font-weight: 700; color: #333; margin-left: auto; }
+
+  .explain-narrative {
+    font-size: 11px;
+    color: #777;
+    line-height: 1.65;
+    background: #fafafa;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid #f0f0f0;
+  }
+
+  /* 배지 */
+  .badge-orange { background: #fff3ee; color: #e05a2b; border: 1px solid #fdd5c3; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+  .badge-green  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+  .badge-blue   { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+  .badge-gray   { background: #f5f5f5; color: #888; border: 1px solid #e8e8e8; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+
+  /* 경보 이력 */
+  .alert-empty { font-size: 11px; color: #bbb; font-style: italic; margin-top: 4px; }
+
+  .section-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #bbb;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  /* 날씨 인디케이터 rows */
+  .weather-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .weather-row:last-child { border-bottom: none; }
+  .weather-row-label { font-size: 11px; color: #aaa; }
+  .weather-row-val { font-size: 12px; font-weight: 700; color: #333; }
+
+  /* gauge */
+  .gauge-wrap {
+    margin-top: 8px;
+    text-align: center;
+  }
+  .gauge-svg { width: 72px; height: 42px; }
+
+  /* 반응형 노트 */
+  .design-note {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 30px;
+    padding: 10px 22px;
+    font-size: 12px;
+    color: #aaa;
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .design-note strong { color: #e05a2b; }
+</style>
+</head>
+<body>
+
+<div class="browser-frame">
+
+  <!-- 네비게이션 -->
+  <div class="nav">
+    <div class="nav-logo">
+      <div class="nav-logo-dot">J</div>
+      제주 신재생에너지 AI 관제 플랫폼
+      <span class="nav-subtitle"></span>
+    </div>
+    <span class="nav-time">2026-06-15 14:00</span>
+
+    <div class="nav-tabs">
+      <div class="nav-tab active">관제 홈</div>
+      <div class="nav-tab">권역 지도</div>
+      <div class="nav-tab">예보 달력</div>
+      <div class="nav-tab">에이전트</div>
+    </div>
+
+    <div class="nav-right">
+      <div class="nav-input">2026-06-15T14:00</div>
+      <div class="nav-btn">관제 실행</div>
+    </div>
+  </div>
+
+  <!-- 상태 바 -->
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span class="status-label">에이전트 정상 모니터링 중</span>
+    <span class="status-sep">|</span>
+    <span>마지막 갱신: 14:02</span>
+    <span class="status-sep">|</span>
+    <span>신뢰도: High</span>
+    <span style="margin-left:auto;font-size:10px;color:#333;cursor:pointer;padding:2px 8px;border:1px solid #222;border-radius:10px;">에이전트 탭 이동 ↗</span>
+  </div>
+
+  <!-- 메인 -->
+  <div class="main">
+
+    <!-- ① 히어로 섹션 (다크) -->
+    <div class="hero-section">
+      <div class="hero-main">
+
+        <!-- 총 발전량 -->
+        <div class="hero-total">
+          <div class="hero-label">
+            오늘 총 발전량
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span class="badge-orange">신뢰도 High</span>
+              <span class="hero-expand">↗</span>
+            </div>
+          </div>
+          <div>
+            <span class="hero-val">82.4</span>
+            <span class="hero-unit">MW</span>
+          </div>
+          <div class="hero-sub">
+            <div class="hero-sub-item">
+              <div class="hero-sub-dot" style="background:#e05a2b;"></div>
+              <span>태양광</span>
+              <span class="hero-sub-val">45.2 MW</span>
+            </div>
+            <div class="hero-sub-item">
+              <div class="hero-sub-dot" style="background:#3b82f6;"></div>
+              <span>풍력</span>
+              <span class="hero-sub-val">37.2 MW</span>
+            </div>
+          </div>
+          <!-- 스파크라인 -->
+          <div class="hero-chart-area">
+            <div class="hero-bar moderate" style="height:28%"></div>
+            <div class="hero-bar moderate" style="height:35%"></div>
+            <div class="hero-bar moderate" style="height:55%"></div>
+            <div class="hero-bar moderate" style="height:70%"></div>
+            <div class="hero-bar moderate" style="height:82%"></div>
+            <div class="hero-bar moderate" style="height:90%"></div>
+            <div class="hero-bar active" style="height:100%"></div>
+            <div class="hero-bar moderate" style="height:88%"></div>
+            <div class="hero-bar moderate" style="height:75%"></div>
+            <div class="hero-bar moderate" style="height:68%"></div>
+            <div class="hero-bar moderate" style="height:60%"></div>
+            <div class="hero-bar moderate" style="height:50%"></div>
+            <div class="hero-bar moderate" style="height:40%"></div>
+            <div class="hero-bar moderate" style="height:30%"></div>
+          </div>
+        </div>
+
+        <!-- 에이전트 상태 -->
+        <div class="hero-agent">
+          <div class="hero-label">에이전트 상태</div>
+          <div class="agent-status-row">
+            <div class="agent-dot"></div>
+            <span class="agent-label">정상 모니터링</span>
+            <span style="margin-left:auto;" class="badge-green">ACTIVE</span>
+          </div>
+          <div class="agent-grid">
+            <div class="agent-metric">
+              <div class="agent-metric-label">신뢰도</div>
+              <div class="agent-metric-val" style="color:#22c55e;">High</div>
+            </div>
+            <div class="agent-metric">
+              <div class="agent-metric-label">갱신</div>
+              <div class="agent-metric-val" style="color:#ccc;font-size:14px;font-family:monospace;">14:02</div>
+            </div>
+            <div class="agent-metric">
+              <div class="agent-metric-label">MAPE</div>
+              <div class="agent-metric-val" style="color:#ccc;">5.8%</div>
+            </div>
+            <div class="agent-metric">
+              <div class="agent-metric-label">모델</div>
+              <div class="agent-metric-val" style="color:#ccc;font-size:12px;">LSTM+CNN</div>
+            </div>
+          </div>
+          <div class="agent-schedule">
+            다음 스케줄: <span>18:00</span> 야간 풍력 브리핑
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ② 메트릭 섹션 (라이트) -->
+    <div class="metrics-section">
+
+      <!-- 차트 행 -->
+      <div class="charts-row">
+
+        <!-- 시간대별 + 일별 차트 카드 -->
+        <div class="metric-card">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div>
+              <div class="mc-label">
+                시간대별 발전량 (24H)
+                <span class="badge-gray">LIVE</span>
+              </div>
+              <div class="mc-chart">
+                <!-- 24H 바 차트 시뮬레이션 -->
+                <div class="mc-chart-bar" style="height:20%;background:#f0f0f0;"></div>
+                <div class="mc-chart-bar" style="height:15%;background:#f0f0f0;"></div>
+                <div class="mc-chart-bar" style="height:10%;background:#f0f0f0;"></div>
+                <div class="mc-chart-bar" style="height:8%;background:#f0f0f0;"></div>
+                <div class="mc-chart-bar" style="height:25%;background:#f0f0f0;"></div>
+                <div class="mc-chart-bar" style="height:50%;background:#e0ede5;"></div>
+                <div class="mc-chart-bar" style="height:72%;background:#c5dfc9;"></div>
+                <div class="mc-chart-bar" style="height:88%;background:#9dc4a2;"></div>
+                <div class="mc-chart-bar" style="height:95%;background:#75a97a;"></div>
+                <div class="mc-chart-bar" style="height:100%;background:#4e8e55;"></div>
+                <div class="mc-chart-bar" style="height:90%;background:#75a97a;"></div>
+                <div class="mc-chart-bar" style="height:78%;background:#9dc4a2;"></div>
+                <div class="mc-chart-bar" style="height:60%;background:#c5dfc9;"></div>
+                <div class="mc-chart-bar" style="height:40%;background:#f0f0f0;"></div>
+                <div class="mc-chart-bar" style="height:20%;background:#f0f0f0;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:#ccc;">
+                <span>00시</span><span>06시</span><span>12시</span><span>18시</span><span>24시</span>
+              </div>
+            </div>
+            <div>
+              <div class="mc-label">
+                일별 추이 (7D)
+                <span class="badge-gray">TREND</span>
+              </div>
+              <div class="mc-chart">
+                <div class="mc-chart-bar" style="height:65%;background:#fde0d4;"></div>
+                <div class="mc-chart-bar" style="height:80%;background:#f9c0a8;"></div>
+                <div class="mc-chart-bar" style="height:55%;background:#fde0d4;"></div>
+                <div class="mc-chart-bar" style="height:90%;background:#f5a07e;"></div>
+                <div class="mc-chart-bar" style="height:70%;background:#f9c0a8;"></div>
+                <div class="mc-chart-bar" style="height:100%;background:#e05a2b;"></div>
+                <div class="mc-chart-bar" style="height:85%;background:#f5a07e;border:2px solid #e05a2b;border-bottom:none;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:#ccc;">
+                <span>6/9</span><span>6/10</span><span>6/11</span><span>6/12</span><span>6/13</span><span>6/14</span><span>오늘</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 경보 이력 -->
+        <div class="metric-card">
+          <div class="mc-label">
+            경보 이력
+            <span class="mc-expand">↗</span>
+          </div>
+          <p class="alert-empty">감지된 경보 없음</p>
+          <div style="margin-top:12px;">
+            <div class="section-label">예약 브리핑</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#aaa;">
+                <div style="width:6px;height:6px;background:#22c55e;border-radius:50%;"></div>
+                <span>매일 06:00 — 일출 전 예측 브리핑</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#aaa;">
+                <div style="width:6px;height:6px;background:#22c55e;border-radius:50%;"></div>
+                <span>매일 12:00 — 주간 피크 점검</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#ddd;text-decoration:line-through;opacity:0.5;">
+                <div style="width:6px;height:6px;background:#ddd;border-radius:50%;"></div>
+                <span>매일 18:00 — 야간 풍력</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 하단 4개 지표 카드 -->
+      <div class="bottom-row">
+
+        <!-- 태양광 -->
+        <div class="metric-card-sm">
+          <div class="mc-label">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <div class="mc-legend-dot" style="background:#e05a2b;"></div>
+              태양광
+            </div>
+            <span class="mc-expand">↗</span>
+          </div>
+          <div style="margin-top:4px;">
+            <span class="mc-val-sm">45.2</span>
+            <span class="mc-unit-sm">MW</span>
+          </div>
+          <div class="mc-progress" style="margin-top:10px;">
+            <div class="mc-progress-fill" style="width:68%;background:#e05a2b;"></div>
+          </div>
+          <div class="mc-progress-label">
+            <span>Low</span>
+            <span style="color:#e05a2b;font-weight:700;">68%</span>
+            <span>High</span>
+          </div>
+          <div style="font-size:9px;color:#ccc;margin-top:6px;">CNN 합성 보정값</div>
+        </div>
+
+        <!-- 풍력 -->
+        <div class="metric-card-sm">
+          <div class="mc-label">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <div class="mc-legend-dot" style="background:#3b82f6;"></div>
+              풍력
+            </div>
+            <span class="mc-expand">↗</span>
+          </div>
+          <div style="margin-top:4px;">
+            <span class="mc-val-sm">37.2</span>
+            <span class="mc-unit-sm">MW</span>
+          </div>
+          <div class="mc-progress" style="margin-top:10px;">
+            <div class="mc-progress-fill" style="width:52%;background:#3b82f6;"></div>
+          </div>
+          <div class="mc-progress-label">
+            <span>Low</span>
+            <span style="color:#3b82f6;font-weight:700;">52%</span>
+            <span>High</span>
+          </div>
+          <div style="font-size:9px;color:#ccc;margin-top:6px;">RAG 유사 벡터 평균</div>
+        </div>
+
+        <!-- 기상 인디케이터 -->
+        <div class="metric-card-sm">
+          <div class="mc-label">기상 인디케이터</div>
+          <div class="weather-row">
+            <span class="weather-row-label">풍속</span>
+            <span class="weather-row-val">6.2 m/s</span>
+          </div>
+          <div class="weather-row">
+            <span class="weather-row-label">일사량</span>
+            <span class="weather-row-val">1.85 MJ/m²</span>
+          </div>
+          <div class="weather-row">
+            <span class="weather-row-label">기온</span>
+            <span class="weather-row-val">24.3 °C</span>
+          </div>
+          <div class="weather-row" style="border-bottom:none;">
+            <span class="weather-row-label">모델</span>
+            <span style="font-size:11px;font-weight:700;color:#22c55e;">LSTM+CNN</span>
+          </div>
+        </div>
+
+        <!-- 예측 정확도 -->
+        <div class="metric-card-sm">
+          <div class="mc-label">
+            <div style="display:flex;align-items:center;gap:5px;">
+              예측 정확도
+            </div>
+            <span class="mc-expand">↗</span>
+          </div>
+          <div style="margin-top:4px;display:flex;align-items:baseline;gap:3px;">
+            <span class="mc-val-sm">94.2</span>
+            <span class="mc-unit-sm">%</span>
+          </div>
+          <div class="mc-progress" style="margin-top:10px;">
+            <div class="mc-progress-fill" style="width:94.2%;background:#111;"></div>
+          </div>
+          <div style="font-size:9px;color:#ccc;margin-top:8px;">MAPE 기준 · 최근 7일 평균</div>
+          <div style="margin-top:6px;"><span class="badge-gray">정상 범위</span></div>
+        </div>
+
+      </div>
+
+      <!-- 예측 설명 에이전트 패널 -->
+      <div class="explain-panel">
+        <div class="explain-header">
+          <div class="explain-header-left">
+            <span class="explain-label">예측 설명 에이전트</span>
+            <span class="explain-badge">신뢰도 High</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:9px;padding:3px 10px;border-radius:10px;background:#f5f5f5;color:#888;cursor:pointer;border:1px solid #eee;">↻ 재분석</span>
+            <span style="color:#ccc;font-size:11px;">▼</span>
+          </div>
+        </div>
+        <div class="explain-body">
+          <div class="explain-col">
+            <div class="section-label">주요 영향 변수 Top 5</div>
+            <div class="explain-var">
+              <div style="width:60px;flex-shrink:0;"><div class="explain-var-bar" style="width:100%;"></div></div>
+              <span class="explain-var-label">일사량</span>
+              <span class="explain-var-val">38.2%</span>
+            </div>
+            <div class="explain-var">
+              <div style="width:60px;flex-shrink:0;"><div class="explain-var-bar" style="width:78%;background:#3b82f6;"></div></div>
+              <span class="explain-var-label">풍속</span>
+              <span class="explain-var-val">29.1%</span>
+            </div>
+            <div class="explain-var">
+              <div style="width:60px;flex-shrink:0;"><div class="explain-var-bar" style="width:50%;background:#888;"></div></div>
+              <span class="explain-var-label">기온</span>
+              <span class="explain-var-val">18.6%</span>
+            </div>
+            <div class="explain-var">
+              <div style="width:60px;flex-shrink:0;"><div class="explain-var-bar" style="width:32%;background:#aaa;"></div></div>
+              <span class="explain-var-label">습도</span>
+              <span class="explain-var-val">9.4%</span>
+            </div>
+            <div class="explain-var">
+              <div style="width:60px;flex-shrink:0;"><div class="explain-var-bar" style="width:18%;background:#ddd;"></div></div>
+              <span class="explain-var-label">운량</span>
+              <span class="explain-var-val">4.7%</span>
+            </div>
+          </div>
+          <div class="explain-col" style="flex:2;">
+            <div class="section-label">종합 설명</div>
+            <div class="explain-narrative">
+              현재 제주 전역의 기압 분포는 안정적이며 구름 유입도가 적어 태양광 발전 효율이 극대화된 상태입니다. 한경/고산 지역의 한라산 배풍 패턴으로 인해 풍력 발전량도 피크 수준에 근접하고 있습니다. LSTM 모델은 오후 2시~4시 구간에서 태양광 기여 비중이 최대 58%까지 상승할 것으로 예측합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /metrics-section -->
+
+  </div><!-- /main -->
+</div><!-- /browser-frame -->
+
+<div class="design-note">
+  <strong>목업</strong> — 관제 홈 탭 리디자인 · 레퍼런스 이미지 반영 · 피드백을 터미널에서 알려주세요
+</div>
+
+</body>
+</html>

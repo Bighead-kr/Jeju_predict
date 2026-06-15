@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>제주 신재생에너지 관제 플랫폼</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,94 +15,240 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', 'Noto Sans KR', system-ui, sans-serif;
-            background-color: #ffffff;
-            color: #111111;
+            background-color: #0a0a0a;
+            color: #e5e5e5;
             letter-spacing: 0;
         }
+
         .editorial-card {
-            background-color: #ffffff;
-            border: 1px solid #e5e5e5;
+            background-color: #111111;
+            border: 1px solid #1e1e1e;
         }
+
         .editorial-card:hover {
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #ffffff; }
-        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
 
-        .leaflet-container { background-color: #fafafa !important; border-radius: 12px; }
-        .clean-map-tiles { filter: grayscale(1) contrast(1.1) brightness(0.95); }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
 
-        .pulse-marker-emerald { background: #16a34a; border-radius: 50%; box-shadow: 0 0 0 0 rgba(22,163,74,0.5); animation: pulse-green 1.8s infinite; }
-        .pulse-marker-amber   { background: #d97706; border-radius: 50%; box-shadow: 0 0 0 0 rgba(217,119,6,0.5); animation: pulse-yellow 1.8s infinite; }
-        .pulse-marker-red     { background: #dc2626; border-radius: 50%; box-shadow: 0 0 0 0 rgba(220,38,38,0.5); animation: pulse-red 1.8s infinite; }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
 
-        @keyframes pulse-green  { 0%{transform:scale(0.9);box-shadow:0 0 0 0 rgba(22,163,74,0.7)} 70%{transform:scale(1.1);box-shadow:0 0 0 10px rgba(22,163,74,0)} 100%{transform:scale(0.9);box-shadow:0 0 0 0 rgba(22,163,74,0)} }
-        @keyframes pulse-yellow { 0%{transform:scale(0.9);box-shadow:0 0 0 0 rgba(217,119,6,0.7)} 70%{transform:scale(1.1);box-shadow:0 0 0 10px rgba(217,119,6,0)} 100%{transform:scale(0.9);box-shadow:0 0 0 0 rgba(217,119,6,0)} }
-        @keyframes pulse-red    { 0%{transform:scale(0.9);box-shadow:0 0 0 0 rgba(220,38,38,0.7)} 70%{transform:scale(1.1);box-shadow:0 0 0 10px rgba(220,38,38,0)} 100%{transform:scale(0.9);box-shadow:0 0 0 0 rgba(220,38,38,0)} }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 9999px;
+        }
 
-        @keyframes fade-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-        .animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
-        @keyframes pulse-status { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        @keyframes agent-spin { to{transform:rotate(360deg)} }
-        .agent-thinking-dot { animation: agent-spin 1s linear infinite; display:inline-block; }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a3a;
+        }
+
+        .leaflet-container {
+            background-color: #0f1015 !important;
+            border-radius: 12px;
+        }
+
+        .clean-map-tiles {
+            filter: grayscale(1) contrast(1.2) brightness(0.18);
+        }
+
+        .pulse-marker-emerald {
+            background: #16a34a;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5);
+            animation: pulse-green 1.8s infinite;
+        }
+
+        .pulse-marker-amber {
+            background: #d97706;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5);
+            animation: pulse-yellow 1.8s infinite;
+        }
+
+        .pulse-marker-red {
+            background: #dc2626;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5);
+            animation: pulse-red 1.8s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7)
+            }
+
+            70% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(22, 163, 74, 0)
+            }
+
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0)
+            }
+        }
+
+        @keyframes pulse-yellow {
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.7)
+            }
+
+            70% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(217, 119, 6, 0)
+            }
+
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(217, 119, 6, 0)
+            }
+        }
+
+        @keyframes pulse-red {
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7)
+            }
+
+            70% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(220, 38, 38, 0)
+            }
+
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0)
+            }
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(4px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.2s ease-out forwards;
+        }
+
+        @keyframes pulse-status {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.4
+            }
+        }
+
+        @keyframes agent-spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .agent-thinking-dot {
+            animation: agent-spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        /* 라이트 메트릭 섹션 */
+        .metric-card-light {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 10px;
+        }
+
+        /* 달력 비선택 카드 */
+        .cal-day-card-dark {
+            background: #111111;
+            border: 1px solid #1e1e1e;
+        }
+
+        /* 에이전트 사이드바 세션 활성 */
+        .session-active {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .session-inactive {
+            color: #555555;
+        }
     </style>
 </head>
+
 <body class="h-screen flex flex-col overflow-hidden">
 
     <!-- Top Navigation Bar -->
-    <nav class="border-b border-[#e5e5e5] bg-white px-8 py-0 flex items-center z-50 relative flex-shrink-0" style="height:52px;">
-        <div class="flex items-center gap-4 flex-shrink-0">
-            <div class="bg-[#111111] text-white rounded-full px-3.5 py-1 font-bold text-xs tracking-widest">JEJU</div>
-            <div>
-                <span class="text-sm font-semibold text-[#000000] tracking-tight block">제주 신재생에너지 AI 관제 플랫폼</span>
-                <span class="text-[10px] text-[#737373] block font-mono" id="top-time-display">2026-06-14 14:00</span>
-            </div>
+    <nav class="border-b border-[#161616] bg-[#0a0a0a] px-6 py-0 flex items-center z-50 relative flex-shrink-0"
+        style="height:48px;">
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <div
+                class="bg-[#e05a2b] text-white rounded-[5px] w-5 h-5 flex items-center justify-center font-black text-[9px] flex-shrink-0">
+                J</div>
+            <span class="text-xs font-bold text-white tracking-tight">제주 신재생에너지 AI 관제 플랫폼</span>
+            <span class="text-[10px] text-[#444] font-mono ml-1" id="top-time-display">2026-06-14 14:00</span>
         </div>
 
-        <!-- Underline tab navigation — absolutely centered -->
-        <div class="absolute left-1/2 -translate-x-1/2 flex items-end h-full">
+        <!-- Pill tab navigation — absolutely centered -->
+        <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-[#141414] rounded-[8px] p-[3px]">
             <button onclick="switchTab('home')" id="tab-btn-home"
-                    class="text-xs font-semibold px-5 h-full border-b-2 border-[#111111] text-[#111111] transition-all">
+                class="text-[11px] font-semibold px-4 py-[5px] rounded-[6px] bg-[#1e1e1e] text-white transition-all">
                 관제 홈
             </button>
             <button onclick="switchTab('map')" id="tab-btn-map"
-                    class="text-xs font-medium px-5 h-full border-b-2 border-transparent text-[#737373] hover:text-[#111111] transition-all">
+                class="text-[11px] font-medium px-4 py-[5px] rounded-[6px] text-[#444] hover:text-[#aaa] transition-all">
                 권역 지도
             </button>
             <button onclick="switchTab('calendar')" id="tab-btn-calendar"
-                    class="text-xs font-medium px-5 h-full border-b-2 border-transparent text-[#737373] hover:text-[#111111] transition-all">
+                class="text-[11px] font-medium px-4 py-[5px] rounded-[6px] text-[#444] hover:text-[#aaa] transition-all">
                 예보 달력
             </button>
             <button onclick="switchTab('agent')" id="tab-btn-agent"
-                    class="text-xs font-medium px-5 h-full border-b-2 border-transparent text-[#737373] hover:text-[#111111] transition-all">
+                class="text-[11px] font-medium px-4 py-[5px] rounded-[6px] text-[#444] hover:text-[#aaa] transition-all">
                 에이전트
             </button>
         </div>
 
         <!-- Controls shown on home tab only -->
-        <div class="flex items-center gap-3 ml-auto" id="operator-controls-wrapper" style="display:none;">
+        <div class="flex items-center gap-2 ml-auto" id="operator-controls-wrapper" style="display:none;">
             <input type="datetime-local" id="picker-datetime" value="2026-06-14T14:00"
-                   class="bg-white border border-[#e5e5e5] text-xs rounded-full px-3.5 py-1.5 focus:outline-none focus:border-[#111111] text-[#000000] font-medium">
-            <button onclick="updateData()" class="bg-[#111111] hover:bg-[#000000] text-white text-xs font-semibold px-5 py-1.5 rounded-full transition-all">
+                class="bg-[#141414] border border-[#222] text-[10px] rounded-[6px] px-3 py-[5px] focus:outline-none focus:border-[#444] text-[#888] font-mono">
+            <button onclick="updateData()"
+                class="bg-[#e05a2b] hover:bg-[#c94d22] text-white text-[10px] font-bold px-4 py-[5px] rounded-[6px] transition-all">
                 관제 실행
             </button>
         </div>
     </nav>
 
-    <!-- Global Status Bar (32px) -->
+    <!-- Global Status Bar (28px) -->
     <div id="global-status-bar"
-         class="flex items-center gap-3 px-6 border-b border-[#e5e5e5] bg-[#f0fdf4] flex-shrink-0"
-         style="height:32px; font-size:11px; font-weight:500; color:#15803d;">
-        <span id="gsb-dot" class="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" style="animation:pulse-status 2s infinite;"></span>
+        class="flex items-center gap-3 px-6 border-b border-[#161616] bg-[#0f0f0f] flex-shrink-0"
+        style="height:28px; font-size:10px; font-weight:500; color:#22c55e;">
+        <span id="gsb-dot" class="h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0"
+            style="animation:pulse-status 2s infinite;"></span>
         <span id="gsb-text">에이전트 정상 모니터링 중</span>
-        <span style="color:#a3a3a3; margin:0 6px;">|</span>
-        <span id="gsb-updated" style="color:#737373;">마지막 갱신: --:--</span>
-        <span style="color:#a3a3a3; margin:0 6px;">|</span>
-        <span id="gsb-confidence" style="color:#737373;">신뢰도: —</span>
+        <span style="color:#1e1e1e; margin:0 4px;">|</span>
+        <span id="gsb-updated" style="color:#444;">마지막 갱신: --:--</span>
+        <span style="color:#1e1e1e; margin:0 4px;">|</span>
+        <span id="gsb-confidence" style="color:#444;">신뢰도: —</span>
         <button onclick="switchTab('agent')" id="rail-toggle-btn"
-                class="ml-auto text-[10px] text-[#737373] hover:text-[#111111] border border-[#e5e5e5] rounded-full px-2.5 py-0.5 bg-white transition-colors">
+            class="ml-auto text-[9px] text-[#444] hover:text-[#aaa] border border-[#222] rounded-full px-2.5 py-0.5 bg-[#141414] transition-colors">
             에이전트 탭 이동
         </button>
     </div>
@@ -108,335 +257,505 @@
     <div class="flex flex-1 overflow-hidden">
 
         <!-- Main Canvas -->
-        <div id="main-canvas" class="flex-1 overflow-hidden relative">
+        <div id="main-canvas" class="flex-1 overflow-hidden relative flex flex-col">
 
             <!-- ① HOME VIEW (관제 홈 — 기본 랜딩) -->
-            <div id="view-home" class="absolute inset-0 flex flex-col overflow-y-auto">
+            <div id="view-home" class="flex-1 flex flex-col overflow-y-auto bg-[#0a0a0a]">
 
-                <!-- Bento KPI Grid -->
-                <div class="grid gap-4 p-6" style="grid-template-columns:1fr 1fr 1fr;">
-                    <!-- Hero: 총 발전량 (2-col) -->
-                    <div class="col-span-2 bg-[#111111] text-white rounded-2xl p-6 flex flex-col justify-between" style="min-height:148px;">
-                        <div class="text-xs font-semibold text-[#737373] uppercase tracking-wider">오늘 예상 총 발전량</div>
-                        <div class="flex items-baseline gap-2 mt-2">
-                            <span id="op-today-val" class="font-bold tracking-tight leading-none" style="font-size:3.5rem;">—</span>
-                            <span class="text-2xl text-[#737373] font-normal">MW</span>
+                <!-- 다크 히어로 섹션 -->
+                <div class="p-5 pb-4 bg-[#0a0a0a] flex-shrink-0">
+                    <!-- Row 1: Hero + Agent Status -->
+                    <div class="grid gap-3" style="grid-template-columns:5fr 3fr;">
+                        <!-- Hero: 총 발전량 -->
+                        <div id="hero-card"
+                            class="bg-[#111111] border border-[#1e1e1e] text-white rounded-xl p-6 flex flex-col justify-between relative overflow-hidden"
+                            style="min-height:148px;">
+                            <div class="absolute top-0 right-0 w-40 h-40 rounded-full"
+                                style="background:radial-gradient(circle,rgba(224,90,43,0.1) 0%,transparent 70%);">
+                            </div>
+                            <div class="flex justify-between items-start">
+                                <span class="text-[10px] font-semibold text-[#444] uppercase tracking-widest">오늘 총
+                                    발전량</span>
+                                <span id="hero-conf-badge"
+                                    class="text-[9px] font-semibold px-2.5 py-1 rounded-full bg-[#e05a2b]/15 text-[#e05a2b] border border-[#e05a2b]/20">신뢰도
+                                    —</span>
+                            </div>
+                            <div class="flex items-end justify-between mt-2">
+                                <div>
+                                    <div class="flex items-baseline gap-2">
+                                        <span id="op-today-val" class="font-bold leading-none text-white"
+                                            style="font-size:3.25rem;letter-spacing:-0.04em;">—</span>
+                                        <span class="text-xl text-[#444]">MW</span>
+                                    </div>
+                                    <div class="flex items-center gap-4 mt-2 text-sm text-[#666]">
+                                        <span class="flex items-center gap-1.5"><span
+                                                class="w-1.5 h-1.5 rounded-full bg-[#e05a2b] flex-shrink-0"></span>☀️
+                                            <strong id="hero-solar-val" class="text-[#ccc] font-semibold">—</strong>
+                                            MW</span>
+                                        <span class="text-[#444]">·</span>
+                                        <span class="flex items-center gap-1.5"><span
+                                                class="w-1.5 h-1.5 rounded-full bg-[#3b82f6] flex-shrink-0"></span>💨
+                                            <strong id="hero-wind-val" class="text-[#ccc] font-semibold">—</strong>
+                                            MW</span>
+                                    </div>
+                                </div>
+                                <div class="flex-shrink-0 opacity-60">
+                                    <canvas id="sparklineChart" width="120" height="44" style="display:block;"></canvas>
+                                </div>
+                            </div>
                         </div>
-                        <div id="op-today-sub" class="text-sm text-[#a3a3a3] mt-2 flex gap-5">
-                            <span>태양광 — MW</span><span class="text-[#525252]">·</span><span>풍력 — MW</span>
+                        <!-- Agent Status Card -->
+                        <div id="op-agent-card"
+                            class="bg-[#0d1f17] border border-[#16301f] rounded-xl p-5 flex flex-col gap-3">
+                            <div class="text-[9px] font-semibold text-[#2d5a3d] uppercase tracking-widest">에이전트 상태</div>
+                            <div class="flex items-center gap-2">
+                                <span id="op-agent-dot" class="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0"
+                                    style="animation:pulse-status 2s infinite;"></span>
+                                <span id="op-agent-label" class="text-sm font-bold text-emerald-400">정상 모니터링</span>
+                                <span
+                                    class="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">ACTIVE</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-auto">
+                                <div class="bg-black/20 rounded-lg p-2.5 border border-white/5">
+                                    <div class="text-[9px] text-[#2d5a3d] uppercase tracking-wider">신뢰도</div>
+                                    <div id="op-agent-conf" class="text-sm font-bold text-emerald-400 mt-0.5">—</div>
+                                </div>
+                                <div class="bg-black/20 rounded-lg p-2.5 border border-white/5">
+                                    <div class="text-[9px] text-[#2d5a3d] uppercase tracking-wider">갱신</div>
+                                    <div id="op-agent-time" class="text-sm font-bold text-[#ccc] mt-0.5 font-mono">--:--
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-[10px] text-[#2d5a3d] border-t border-emerald-900/40 pt-2.5">다음 스케줄: <span
+                                    class="font-semibold text-emerald-400">18:00</span></div>
                         </div>
-                    </div>
-                    <!-- Agent Status Card (1-col) -->
-                    <div id="op-agent-card" class="bg-[#f0fdf4] border border-emerald-200 rounded-2xl p-5 flex flex-col gap-2" style="min-height:148px;">
-                        <div class="text-xs font-semibold text-[#737373] uppercase tracking-wider">에이전트 상태</div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span id="op-agent-dot" class="h-3 w-3 rounded-full bg-emerald-500 flex-shrink-0" style="animation:pulse-status 2s infinite;"></span>
-                            <span id="op-agent-label" class="text-sm font-semibold text-emerald-700">정상 모니터링</span>
-                        </div>
-                        <div class="text-xs text-[#737373]">신뢰도: <span id="op-agent-conf" class="font-semibold text-[#111111]">—</span></div>
-                        <div class="text-xs text-[#737373]">갱신: <span id="op-agent-time" class="font-mono">--:--</span></div>
-                    </div>
-                    <!-- Solar KPI -->
-                    <div class="bg-white border border-[#e5e5e5] rounded-2xl p-5" style="border-top:3px solid #f59e0b;">
-                        <div class="text-xs font-semibold text-[#737373] uppercase tracking-wider mb-2">태양광</div>
-                        <div class="flex items-baseline gap-1">
-                            <span id="op-solar-val" class="text-3xl font-bold text-[#111111]">—</span>
-                            <span class="text-base text-[#737373]"> MW</span>
-                        </div>
-                        <div class="text-[10px] text-[#737373] mt-2">CNN 합성 예측 보정값</div>
-                    </div>
-                    <!-- Wind KPI -->
-                    <div class="bg-white border border-[#e5e5e5] rounded-2xl p-5" style="border-top:3px solid #3b82f6;">
-                        <div class="text-xs font-semibold text-[#737373] uppercase tracking-wider mb-2">풍력</div>
-                        <div class="flex items-baseline gap-1">
-                            <span id="op-wind-val" class="text-3xl font-bold text-[#111111]">—</span>
-                            <span class="text-base text-[#737373]"> MW</span>
-                        </div>
-                        <div class="text-[10px] text-[#737373] mt-2">RAG 유사 벡터 평균</div>
-                    </div>
-                    <!-- Accuracy KPI -->
-                    <div class="bg-white border border-[#e5e5e5] rounded-2xl p-5" style="border-top:3px solid #111111;">
-                        <div class="text-xs font-semibold text-[#737373] uppercase tracking-wider mb-2">예측 정확도 (MAPE)</div>
-                        <div class="flex items-baseline gap-1">
-                            <span id="op-accuracy-val" class="text-3xl font-bold text-[#111111]">—</span>
-                            <span class="text-base text-[#737373]">%</span>
-                        </div>
-                        <div class="mt-2 h-1.5 bg-[#e5e5e5] rounded-full overflow-hidden">
-                            <div id="op-accuracy-bar" class="h-full bg-[#111111] rounded-full transition-all" style="width:0%"></div>
-                        </div>
-                        <div class="text-[10px] text-[#737373] mt-1.5" id="op-status-sub">MAE 오차한계선 범위 정상</div>
                     </div>
                 </div>
 
-                <!-- Charts + Side panels -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 px-6 pb-4">
-                    <!-- Charts 2/3 -->
-                    <div class="editorial-card rounded-2xl p-6 lg:col-span-2 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <h4 class="text-xs font-bold tracking-wider text-[#737373] uppercase">시간대별 발전량 (24H)</h4>
-                                    <span class="px-2 py-0.5 bg-[#f5f5f5] text-[#111111] rounded text-[9px] font-semibold border border-[#e5e5e5]">EMS LIVE</span>
+                <!-- 다크 메트릭 섹션 -->
+                <div class="p-5 pt-4 space-y-3 flex-1" style="background:#141414;">
+
+                    <!-- Row 2: Charts + Alert History -->
+                    <div class="grid gap-3" style="grid-template-columns:3fr 2fr;">
+                        <!-- Charts Card (24H + 7D) -->
+                        <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#242424]">
+                            <div class="grid grid-cols-2 gap-5">
+                                <div>
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="text-[10px] font-bold tracking-wider text-[#666] uppercase">시간대별
+                                            (24H)</h4>
+                                        <span
+                                            class="px-1.5 py-0.5 bg-[#111] text-[#555] rounded text-[9px] font-bold border border-[#2a2a2a]">LIVE</span>
+                                    </div>
+                                    <div class="relative w-full" style="height:180px;">
+                                        <canvas id="predictionChart"></canvas>
+                                    </div>
                                 </div>
-                                <div class="relative w-full h-56 bg-[#fafafa] rounded-xl p-2 border border-[#e5e5e5]">
-                                    <canvas id="predictionChart"></canvas>
+                                <div>
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="text-[10px] font-bold tracking-wider text-[#666] uppercase">일별 추이
+                                            (7D)</h4>
+                                        <span
+                                            class="px-1.5 py-0.5 bg-[#111] text-[#555] rounded text-[9px] font-bold border border-[#2a2a2a]">TREND</span>
+                                    </div>
+                                    <div class="relative w-full" style="height:180px;">
+                                        <canvas id="dailyChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <h4 class="text-xs font-bold tracking-wider text-[#737373] uppercase">일별 발전량 추이 (7D)</h4>
-                                    <span class="px-2 py-0.5 bg-[#f5f5f5] text-[#111111] rounded text-[9px] font-semibold border border-[#e5e5e5]">주간 트렌드</span>
-                                </div>
-                                <div class="relative w-full h-56 bg-[#fafafa] rounded-xl p-2 border border-[#e5e5e5]">
-                                    <canvas id="dailyChart"></canvas>
-                                </div>
+                        </div>
+                        <!-- Alert / Event History -->
+                        <div class="bg-[#1a1a1a] rounded-xl p-5 border border-[#242424] flex flex-col">
+                            <div class="flex justify-between items-center mb-3 flex-shrink-0">
+                                <h4 class="text-[10px] font-bold tracking-wider text-[#666] uppercase">경보 이력</h4>
+                                <span id="home-alert-badge"
+                                    class="hidden text-[9px] bg-red-900/30 text-red-400 px-2 py-0.5 rounded-full font-bold border border-red-500/30">0건</span>
+                            </div>
+                            <div id="home-alert-list" class="flex-1 space-y-1.5 overflow-y-auto"
+                                style="max-height:200px;">
+                                <p class="text-[11px] text-[#555] italic">감지된 경보 없음</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right column: Explain + KG -->
-                    <div class="space-y-4">
-                        <!-- 예측 설명 에이전트 -->
-                        <div class="editorial-card rounded-2xl p-5 space-y-3" id="explain-panel">
-                            <div class="flex items-center justify-between">
-                                <h4 class="text-xs font-bold tracking-wider text-[#737373] uppercase">🧠 예측 설명</h4>
-                                <div class="flex items-center gap-2">
-                                    <span id="explain-confidence-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#f5f5f5] text-[#737373] border border-[#e5e5e5]">신뢰도 -</span>
-                                    <button onclick="runExplainAgent()" class="text-[10px] font-semibold bg-[#111111] text-white px-3 py-1 rounded-full hover:bg-[#000000] transition-all">설명 생성</button>
+                    <!-- Row 3: Solar | Wind | Weather | Accuracy -->
+                    <div class="grid grid-cols-4 gap-3">
+                        <!-- Solar -->
+                        <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#242424]"
+                            style="border-top:2px solid #e05a2b;">
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-[#e05a2b]"></div>
+                                <div class="text-[9px] font-bold text-[#666] uppercase tracking-widest">태양광</div>
+                            </div>
+                            <div class="flex items-baseline gap-1">
+                                <span id="op-solar-val" class="text-3xl font-bold text-[#e5e5e5]"
+                                    style="letter-spacing:-0.02em;">—</span>
+                                <span class="text-sm text-[#555]">MW</span>
+                            </div>
+                            <div class="mt-3">
+                                <div class="flex justify-between text-[9px] text-[#444] mb-1.5">
+                                    <span>Low</span>
+                                    <span id="solar-bar-label" class="font-bold text-[#e05a2b]">—%</span>
+                                    <span>High</span>
+                                </div>
+                                <div class="h-[3px] bg-[#2a2a2a] rounded-full overflow-hidden">
+                                    <div id="solar-progress-bar"
+                                        class="h-full bg-[#e05a2b] rounded-full transition-all duration-700"
+                                        style="width:0%"></div>
                                 </div>
                             </div>
-                            <div id="explain-refinement-box" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[9px] font-bold text-amber-700 uppercase tracking-wider">🔁 자율 재예측</span>
-                                    <span class="text-[9px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">Low Confidence</span>
+                            <div class="text-[9px] text-[#444] mt-2.5">CNN 합성 보정값</div>
+                        </div>
+                        <!-- Wind -->
+                        <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#242424]"
+                            style="border-top:2px solid #3b82f6;">
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></div>
+                                <div class="text-[9px] font-bold text-[#666] uppercase tracking-widest">풍력</div>
+                            </div>
+                            <div class="flex items-baseline gap-1">
+                                <span id="op-wind-val" class="text-3xl font-bold text-[#e5e5e5]"
+                                    style="letter-spacing:-0.02em;">—</span>
+                                <span class="text-sm text-[#555]">MW</span>
+                            </div>
+                            <div class="mt-3">
+                                <div class="flex justify-between text-[9px] text-[#444] mb-1.5">
+                                    <span>Low</span>
+                                    <span id="wind-bar-label" class="font-bold text-[#3b82f6]">—%</span>
+                                    <span>High</span>
                                 </div>
-                                <p id="explain-refinement-reason" class="text-[10px] text-amber-700 leading-relaxed"></p>
+                                <div class="h-[3px] bg-[#2a2a2a] rounded-full overflow-hidden">
+                                    <div id="wind-progress-bar"
+                                        class="h-full bg-[#3b82f6] rounded-full transition-all duration-700"
+                                        style="width:0%"></div>
+                                </div>
+                            </div>
+                            <div class="text-[9px] text-[#444] mt-2.5">RAG 유사 벡터 평균</div>
+                        </div>
+                        <!-- Weather Indicators -->
+                        <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#242424]">
+                            <div class="text-[9px] font-bold text-[#666] uppercase tracking-widest mb-3">기상 인디케이터</div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center py-1 border-b border-[#242424]">
+                                    <span class="text-[10px] text-[#666]">풍속</span>
+                                    <strong id="op-val-obs-wind" class="text-xs font-bold text-[#ccc]">— m/s</strong>
+                                </div>
+                                <div class="flex justify-between items-center py-1 border-b border-[#242424]">
+                                    <span class="text-[10px] text-[#666]">일사량</span>
+                                    <strong id="op-val-obs-solar" class="text-xs font-bold text-[#ccc]">— MJ/m²</strong>
+                                </div>
+                                <div class="flex justify-between items-center py-1 border-b border-[#242424]">
+                                    <span class="text-[10px] text-[#666]">기온</span>
+                                    <strong id="op-val-obs-temp" class="text-xs font-bold text-[#ccc]">— °C</strong>
+                                </div>
+                                <div class="flex justify-between items-center py-1">
+                                    <span class="text-[10px] text-[#666]">모델</span>
+                                    <strong id="op-val-obs-model"
+                                        class="text-[10px] font-bold text-emerald-500">LSTM+CNN</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Accuracy -->
+                        <div class="bg-[#1a1a1a] rounded-xl p-4 border border-[#242424]"
+                            style="border-top:2px solid #555;">
+                            <div class="text-[9px] font-bold text-[#666] uppercase tracking-widest mb-2">예측 정확도</div>
+                            <div class="flex items-baseline gap-1">
+                                <span id="op-accuracy-val" class="text-3xl font-bold text-[#e5e5e5]"
+                                    style="letter-spacing:-0.02em;">—</span>
+                                <span class="text-sm text-[#555]">%</span>
+                            </div>
+                            <div class="mt-3">
+                                <div class="h-[3px] bg-[#2a2a2a] rounded-full overflow-hidden">
+                                    <div id="op-accuracy-bar"
+                                        class="h-full bg-[#888] rounded-full transition-all duration-700"
+                                        style="width:0%"></div>
+                                </div>
+                            </div>
+                            <div class="text-[9px] text-[#ccc] mt-2.5" id="op-status-sub">MAPE 기준</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Explain Panel (collapsible) -->
+                    <div class="bg-[#1a1a1a] rounded-xl overflow-hidden border border-[#242424]" id="explain-panel">
+                        <button onclick="toggleExplainPanel()"
+                            class="w-full flex justify-between items-center px-5 py-3.5 hover:bg-[#1e1e1e] transition-colors">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-bold tracking-wider text-[#666] uppercase">예측 설명
+                                    에이전트</span>
+                                <span id="explain-confidence-badge"
+                                    class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#111] text-[#555] border border-[#2a2a2a]">신뢰도
+                                    -</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="event.stopPropagation(); runExplainAgent()"
+                                    class="text-[9px] font-semibold bg-[#111] text-[#666] border border-[#2a2a2a] px-2.5 py-1 rounded-full hover:bg-[#1e1e1e] transition-all">↻
+                                    재분석</button>
+                                <span id="explain-panel-chevron" class="text-[#444] text-xs select-none">▼</span>
+                            </div>
+                        </button>
+                        <div id="explain-panel-body" class="hidden border-t border-[#242424] p-5 space-y-3">
+                            <div id="explain-refinement-box"
+                                class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] font-bold text-amber-700 uppercase tracking-wider">🔁 자율
+                                        재예측</span>
+                                    <span class="text-[9px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">Low
+                                        Confidence</span>
+                                </div>
+                                <p id="explain-refinement-reason" class="text-[10px] text-amber-700 leading-relaxed">
+                                </p>
                                 <div class="grid grid-cols-2 gap-2">
                                     <div class="bg-white border border-amber-200 rounded-lg p-2">
                                         <span class="text-[9px] text-amber-600 block">☀️ 태양광 범위</span>
-                                        <span id="explain-solar-range" class="text-xs font-bold text-amber-800">- ~ - MW</span>
+                                        <span id="explain-solar-range" class="text-xs font-bold text-amber-800">- ~ -
+                                            MW</span>
                                     </div>
                                     <div class="bg-white border border-amber-200 rounded-lg p-2">
                                         <span class="text-[9px] text-amber-600 block">💨 풍력 범위</span>
-                                        <span id="explain-wind-range" class="text-xs font-bold text-amber-800">- ~ - MW</span>
+                                        <span id="explain-wind-range" class="text-xs font-bold text-amber-800">- ~ -
+                                            MW</span>
                                     </div>
                                 </div>
                             </div>
                             <div id="explain-vars-box" class="hidden space-y-2">
-                                <span class="text-[9px] font-bold text-[#737373] uppercase tracking-wider block">📊 주요 영향 변수 Top 5</span>
+                                <span class="text-[9px] font-bold text-[#aaa] uppercase tracking-wider block">주요 영향 변수
+                                    Top 5</span>
                                 <div id="explain-vars-list" class="space-y-1.5"></div>
                             </div>
-                            <div id="explain-rag-box" class="hidden bg-[#f5f5f5] border border-[#e5e5e5] rounded-xl p-3">
-                                <span class="text-[9px] font-bold text-[#737373] uppercase tracking-wider block mb-1">📚 RAG 유사 사례</span>
-                                <p id="explain-rag-text" class="text-[10px] text-[#737373] leading-relaxed"></p>
+                            <div id="explain-rag-box" class="hidden bg-[#111] border border-[#2a2a2a] rounded-xl p-3">
+                                <span class="text-[9px] font-bold text-[#555] uppercase tracking-wider block mb-1">RAG
+                                    유사 사례</span>
+                                <p id="explain-rag-text" class="text-[10px] text-[#777] leading-relaxed"></p>
                             </div>
                             <div id="explain-kg-box" class="hidden space-y-1.5">
-                                <span class="text-[9px] font-bold text-[#737373] uppercase tracking-wider block">📐 물리 규칙</span>
+                                <span class="text-[9px] font-bold text-[#555] uppercase tracking-wider block">물리
+                                    규칙</span>
                                 <div id="explain-kg-list" class="space-y-1"></div>
                             </div>
-                            <div id="explain-narrative-box" class="hidden bg-[#fafafa] border border-[#e5e5e5] rounded-xl p-3">
-                                <span class="text-[9px] font-bold text-[#737373] uppercase tracking-wider block mb-2">💬 종합 설명</span>
-                                <p id="explain-narrative-text" class="text-[10px] text-[#111111] leading-relaxed whitespace-pre-line"></p>
+                            <div id="explain-narrative-box"
+                                class="hidden bg-[#111] border border-[#2a2a2a] rounded-xl p-3">
+                                <span class="text-[9px] font-bold text-[#555] uppercase tracking-wider block mb-2">종합
+                                    설명</span>
+                                <p id="explain-narrative-text"
+                                    class="text-[10px] text-[#888] leading-relaxed whitespace-pre-line"></p>
                             </div>
-                            <p id="explain-placeholder" class="text-xs text-[#a3a3a3] italic text-center py-3">관제 실행 후 '설명 생성' 버튼을 누르면 분석이 시작됩니다.</p>
-                        </div>
-
-                        <!-- KG 물리 법칙 및 알림 -->
-                        <div class="editorial-card rounded-2xl p-5 space-y-3">
-                            <div class="flex justify-between items-center">
-                                <h4 class="text-xs font-bold tracking-wider text-[#737373] uppercase">KG 물리 법칙 및 알림</h4>
-                                <span class="px-2 py-0.5 text-[9px] font-semibold bg-emerald-500/10 text-emerald-600 rounded border border-emerald-500/20">관제 활성</span>
-                            </div>
-                            <div id="op-events-container" class="space-y-2">
-                                <p class="text-xs text-[#737373] italic">관제 시스템 상태 갱신 대기 중...</p>
-                            </div>
-                            <div class="border-t border-[#e5e5e5] pt-3 space-y-2">
-                                <span class="text-[10px] text-[#737373] uppercase font-bold tracking-wider block">실시간 기상 인디케이터</span>
-                                <div class="grid grid-cols-2 gap-2 text-[11px] text-[#111111] font-medium">
-                                    <div>💨 풍속: <strong id="op-val-obs-wind" class="text-blue-600">- m/s</strong></div>
-                                    <div>☀️ 일사: <strong id="op-val-obs-solar" class="text-amber-600">- MJ/m²</strong></div>
-                                    <div>🌡️ 기온: <strong id="op-val-obs-temp" class="text-rose-600">- °C</strong></div>
-                                    <div>🎯 모델: <strong id="op-val-obs-model" class="text-emerald-600">LSTM+CNN</strong></div>
-                                </div>
-                            </div>
+                            <p id="explain-placeholder" class="text-xs text-[#444] italic text-center py-3">관제 실행 시 자동으로
+                                분석됩니다.</p>
                         </div>
                     </div>
-                </div>
 
-                <!-- RAG 유사사례 -->
-                <div class="editorial-card rounded-2xl p-6 mx-6 mb-6 space-y-4">
-                    <h4 class="text-xs font-bold tracking-wider text-[#737373] uppercase">RAG 과거 유사 기상 윈도우 스캔 결과</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="op-rag-cases">
-                        <p class="text-xs text-[#737373] italic md:col-span-3">유사 기상 레코드가 존재하지 않습니다.</p>
-                    </div>
                 </div>
             </div>
 
             <!-- ② MAP VIEW -->
-            <div id="view-map" class="absolute inset-0 flex flex-col p-6 space-y-6 overflow-y-auto hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full min-h-0">
-                    <div class="lg:col-span-2 editorial-card rounded-2xl p-6 flex flex-col justify-between relative min-h-[500px] z-10">
-                        <div class="flex justify-between items-center z-20 mb-3">
-                            <div>
-                                <h3 class="text-sm font-bold tracking-wider text-[#000000] uppercase">제주 특별자치도 실시간 관제지도</h3>
-                                <p class="text-[11px] text-[#737373] mt-0.5">각 권역별 실시간 예측 등급 및 자원 분포를 시각화합니다.</p>
-                            </div>
-                            <span class="px-2.5 py-1 text-[10px] bg-[#f5f5f5] text-[#111111] rounded-full border border-[#e5e5e5] font-mono">Leaflet API</span>
+            <div id="view-map" class="absolute inset-0 flex hidden" style="background:#0a0a0a;">
+                <!-- 지도 영역 (좌) -->
+                <div class="flex-1 flex flex-col p-5 gap-3 min-w-0">
+                    <div class="flex justify-between items-center flex-shrink-0">
+                        <div>
+                            <h3 class="text-sm font-bold text-white tracking-tight">제주 특별자치도 실시간 관제지도</h3>
+                            <p class="text-[11px] text-[#444] mt-0.5">각 권역별 실시간 예측 등급 및 자원 분포를 시각화합니다.</p>
                         </div>
-                        <div class="flex-1 w-full h-full min-h-[380px] relative z-10 rounded-xl overflow-hidden border border-[#e5e5e5]" id="map"></div>
-                        <div class="flex justify-between items-center bg-[#fafafa] p-3.5 mt-3 rounded-xl border border-[#e5e5e5] z-20">
-                            <div class="flex items-center gap-4 text-xs font-medium text-[#111111]">
-                                <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-emerald-500"></span> 높음 (25MW 이상)</span>
-                                <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-amber-500"></span> 보통 (10~25MW)</span>
-                                <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-red-500"></span> 낮음 (10MW 미만)</span>
-                            </div>
+                        <span
+                            class="px-2.5 py-1 text-[9px] bg-[#141414] text-[#555] rounded-lg border border-[#1e1e1e] font-mono">Leaflet
+                            API</span>
+                    </div>
+                    <div class="flex-1 relative z-10 rounded-xl overflow-hidden border border-[#1e1e1e] min-h-0"
+                        id="map"></div>
+                    <div
+                        class="flex items-center gap-4 bg-[#111] px-4 py-2.5 rounded-xl border border-[#1e1e1e] flex-shrink-0">
+                        <span class="flex items-center gap-1.5 text-[10px] text-[#666]"><span
+                                class="h-2 w-2 rounded-full bg-emerald-500"></span> 높음 (25MW+)</span>
+                        <span class="flex items-center gap-1.5 text-[10px] text-[#666]"><span
+                                class="h-2 w-2 rounded-full bg-amber-500"></span> 보통 (10~25MW)</span>
+                        <span class="flex items-center gap-1.5 text-[10px] text-[#666]"><span
+                                class="h-2 w-2 rounded-full bg-red-500"></span> 낮음 (10MW 미만)</span>
+                    </div>
+                </div>
+
+                <!-- 우측 패널 (다크) -->
+                <div class="flex flex-col gap-3 overflow-y-auto flex-shrink-0 p-4 border-l border-[#1a1a1a]"
+                    style="width:290px;background:#111111;">
+                    <div class="flex justify-between items-center flex-shrink-0">
+                        <h4 class="text-[10px] font-bold tracking-wider text-[#555] uppercase">선택 지역</h4>
+                        <span id="map-region-title"
+                            class="text-[11px] font-bold text-[#ccc] bg-[#1a1a1a] px-2.5 py-1 rounded-lg border border-[#2a2a2a]">제주
+                            전역</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-[#1a1a1a] p-3 rounded-xl border border-[#242424]"
+                            style="border-top:2px solid #e05a2b;">
+                            <span class="text-[9px] text-[#555] font-bold block uppercase tracking-wider">태양광</span>
+                            <span id="map-info-solar-val" class="text-lg font-bold text-[#e5e5e5] mt-1 block"
+                                style="letter-spacing:-0.02em;">- MW</span>
+                        </div>
+                        <div class="bg-[#1a1a1a] p-3 rounded-xl border border-[#242424]"
+                            style="border-top:2px solid #3b82f6;">
+                            <span class="text-[9px] text-[#555] font-bold block uppercase tracking-wider">풍력</span>
+                            <span id="map-info-wind-val" class="text-lg font-bold text-[#e5e5e5] mt-1 block"
+                                style="letter-spacing:-0.02em;">- MW</span>
                         </div>
                     </div>
-
-                    <div class="editorial-card rounded-2xl p-6 flex flex-col gap-4 z-10 overflow-y-auto">
-                        <div class="border-b border-[#e5e5e5] pb-3 flex justify-between items-center flex-shrink-0">
-                            <h4 class="text-xs font-bold tracking-wider text-[#737373] uppercase">선택 지역 상세 예보</h4>
-                            <span id="map-region-title" class="text-xs font-bold text-[#000000] bg-[#f5f5f5] px-3 py-1 rounded-full border border-[#e5e5e5]">제주 전역</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-[#1a1a1a] p-3 rounded-xl border border-[#242424]">
+                            <span class="text-[9px] text-[#555] font-bold block uppercase tracking-wider">총 발전량</span>
+                            <span id="map-info-generation" class="text-lg font-bold text-[#e5e5e5] mt-1 block"
+                                style="letter-spacing:-0.02em;">- MW</span>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-white p-3 rounded-xl border border-[#e5e5e5]" style="border-top:3px solid #f59e0b;">
-                                <span class="text-[9px] text-[#737373] font-bold block uppercase tracking-wider">태양광</span>
-                                <span id="map-info-solar-val" class="text-lg font-bold text-[#111111] mt-1 block">- MW</span>
-                            </div>
-                            <div class="bg-white p-3 rounded-xl border border-[#e5e5e5]" style="border-top:3px solid #3b82f6;">
-                                <span class="text-[9px] text-[#737373] font-bold block uppercase tracking-wider">풍력</span>
-                                <span id="map-info-wind-val" class="text-lg font-bold text-[#111111] mt-1 block">- MW</span>
-                            </div>
+                        <div class="bg-[#1a1a1a] p-3 rounded-xl border border-[#242424]">
+                            <span class="text-[9px] text-[#555] font-bold block uppercase tracking-wider">일사량</span>
+                            <span id="map-info-solar-rad" class="text-lg font-bold text-[#e5e5e5] mt-1 block"
+                                style="letter-spacing:-0.02em;">- MJ/m²</span>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-[#f5f5f5] p-3 rounded-xl border border-[#e5e5e5]">
-                                <span class="text-[9px] text-[#737373] font-bold block uppercase tracking-wider">⚡ 총 발전량</span>
-                                <span id="map-info-generation" class="text-lg font-bold text-[#111111] mt-1 block">- MW</span>
-                            </div>
-                            <div class="bg-[#f5f5f5] p-3 rounded-xl border border-[#e5e5e5]">
-                                <span class="text-[9px] text-[#737373] font-bold block uppercase tracking-wider">☀️ 일사량</span>
-                                <span id="map-info-solar-rad" class="text-lg font-bold text-[#111111] mt-1 block">- MJ/m²</span>
-                            </div>
+                    </div>
+                    <div class="bg-[#1a1a1a] p-3 rounded-xl border border-[#242424]">
+                        <span class="text-[9px] text-[#555] font-bold block uppercase mb-1.5">날씨 및 풍향</span>
+                        <span id="map-info-weather" class="text-xs text-[#888] font-medium block">-</span>
+                    </div>
+                    <div id="map-refinement-badge"
+                        class="hidden bg-amber-950/40 border border-amber-800/40 rounded-xl px-3.5 py-2.5 space-y-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[9px] font-bold text-amber-500 uppercase tracking-wider">🔁 자율 재예측
+                                범위</span>
+                            <span class="text-[9px] text-amber-600 bg-amber-900/40 px-1.5 py-0.5 rounded-full">Low
+                                Confidence</span>
                         </div>
-                        <div class="bg-[#f5f5f5] p-3 rounded-xl border border-[#e5e5e5]">
-                            <span class="text-[9px] text-[#737373] font-bold block uppercase mb-1">날씨 및 풍향</span>
-                            <span id="map-info-weather" class="text-xs text-[#111111] font-medium block">-</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><span class="text-[9px] text-amber-600 block">☀️ 태양광</span><span id="map-refine-solar"
+                                    class="text-xs font-bold text-amber-400">- ~ - MW</span></div>
+                            <div><span class="text-[9px] text-amber-600 block">💨 풍력</span><span id="map-refine-wind"
+                                    class="text-xs font-bold text-amber-400">- ~ - MW</span></div>
                         </div>
-                        <div id="map-refinement-badge" class="hidden bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5 space-y-1">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[9px] font-bold text-amber-700 uppercase tracking-wider">🔁 자율 재예측 범위</span>
-                                <span class="text-[9px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">Low Confidence</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><span class="text-[9px] text-amber-600 block">☀️ 태양광</span><span id="map-refine-solar" class="text-xs font-bold text-amber-800">- ~ - MW</span></div>
-                                <div><span class="text-[9px] text-amber-600 block">💨 풍력</span><span id="map-refine-wind" class="text-xs font-bold text-amber-800">- ~ - MW</span></div>
-                            </div>
-                        </div>
-                        <div class="space-y-1">
-                            <span class="text-[9px] text-[#737373] font-bold block uppercase tracking-wider">AI 분석 및 예보</span>
-                            <div class="bg-[#f5f5f5] border border-[#e5e5e5] p-3 rounded-xl leading-relaxed text-xs text-[#737373]" id="map-info-ai">
-                                지도의 각 권역 마커를 클릭하시면 지역 맞춤형 AI 해설이 표시됩니다.
-                            </div>
+                    </div>
+                    <div class="bg-[#1a1a1a] p-3 rounded-xl border border-[#242424] flex-1">
+                        <span class="text-[9px] text-[#555] font-bold block uppercase tracking-wider mb-2">AI 분석</span>
+                        <div class="text-xs text-[#777] leading-relaxed" id="map-info-ai">
+                            지도의 각 권역 마커를 클릭하시면 지역 맞춤형 AI 해설이 표시됩니다.
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- ③ CALENDAR VIEW -->
-            <div id="view-calendar" class="absolute inset-0 flex flex-col p-6 space-y-6 overflow-y-auto hidden">
-                <div class="editorial-card rounded-2xl p-8 flex flex-col justify-between min-h-[550px] w-full bg-white relative">
+            <div id="view-calendar" class="absolute inset-0 flex flex-col p-5 hidden overflow-y-auto"
+                style="background:#0a0a0a;">
+                <div class="flex justify-between items-center mb-6 flex-shrink-0">
                     <div>
-                        <div class="flex justify-between items-center mb-8">
-                            <div>
-                                <h3 class="text-base font-bold tracking-wider text-[#000000] uppercase" id="cal-month-title">2026년 6월 발전 예보 스케줄러</h3>
-                                <p class="text-xs text-[#737373] mt-1">원하는 날짜를 선택하면 상세 발전 예측 데이터와 에이전트 리포트 링크가 활성화됩니다.</p>
-                            </div>
-                            <div class="flex items-center gap-2 text-xs">
-                                <button onclick="prevMonth()" class="px-3 py-1.5 rounded-lg bg-[#f5f5f5] border border-[#e5e5e5] hover:bg-[#e5e5e5] transition-all font-bold text-[#111111]">◀</button>
-                                <span class="px-4 py-1.5 font-bold text-sm text-[#000000]" id="cal-month-display">6월 (June)</span>
-                                <button onclick="nextMonth()" class="px-3 py-1.5 rounded-lg bg-[#f5f5f5] border border-[#e5e5e5] hover:bg-[#e5e5e5] transition-all font-bold text-[#111111]">▶</button>
-                                <input type="date" id="cal-jump-date" class="hidden" onchange="jumpToDate(this.value)">
-                                <button onclick="document.getElementById('cal-jump-date').showPicker()"
-                                        class="text-xs border border-[#e5e5e5] rounded-xl px-3.5 py-1.5 text-[#737373] hover:text-[#111111] hover:border-[#a3a3a3] transition-all flex items-center gap-1.5 font-medium bg-white">
-                                    📅 날짜 이동
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Focused Carousel 수평 컨테이너 -->
-                        <div id="calendar-days-grid" class="flex gap-4 overflow-x-auto py-8 px-4 items-center" style="scrollbar-width:thin; min-height: 380px;"></div>
+                        <h3 class="text-base font-bold text-white tracking-tight" id="cal-month-title">2026년 6월 발전 예보
+                            스케줄러</h3>
+                        <p class="text-[11px] text-[#444] mt-1">날짜를 선택하면 상세 발전 예측 데이터와 에이전트 리포트가 활성화됩니다.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="prevMonth()"
+                            class="w-7 h-7 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] hover:bg-[#222] transition-all font-bold text-[#666] text-xs flex items-center justify-center">◀</button>
+                        <span class="px-3 py-1.5 font-bold text-sm text-[#ccc]" id="cal-month-display">6월 (June)</span>
+                        <button onclick="nextMonth()"
+                            class="w-7 h-7 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] hover:bg-[#222] transition-all font-bold text-[#666] text-xs flex items-center justify-center">▶</button>
+                        <input type="date" id="cal-jump-date" class="hidden" onchange="jumpToDate(this.value)">
+                        <button onclick="document.getElementById('cal-jump-date').showPicker()"
+                            class="text-[10px] border border-[#2a2a2a] rounded-lg px-3 py-1.5 text-[#555] hover:text-[#aaa] hover:border-[#444] transition-all flex items-center gap-1.5 font-medium bg-[#1a1a1a]">
+                            📅 날짜 이동
+                        </button>
                     </div>
                 </div>
+
+                <!-- Focused Carousel 수평 컨테이너 -->
+                <div id="calendar-days-grid" class="flex gap-3 overflow-x-auto py-6 px-2 items-center flex-1"
+                    style="scrollbar-width:thin;scrollbar-color:#2a2a2a transparent;min-height:340px;"></div>
             </div>
 
             <!-- ④ AGENT VIEW -->
-            <div id="view-agent" class="absolute inset-0 flex overflow-hidden hidden bg-white">
+            <div id="view-agent" class="absolute inset-0 flex overflow-hidden hidden" style="background:#0a0a0a;">
                 <!-- 좌측: 상태 + 경보 + 대화 내역 + 예약 브리핑 -->
-                <div class="w-80 border-r border-[#e5e5e5] flex flex-col overflow-y-auto p-4 space-y-4 flex-shrink-0 bg-white">
+                <div class="w-72 border-r border-[#161616] flex flex-col overflow-y-auto p-4 space-y-4 flex-shrink-0"
+                    style="background:#0a0a0a;">
                     <!-- Section 1: 현재 상태 -->
                     <div>
-                        <div class="text-[9px] font-semibold text-[#a3a3a3] uppercase tracking-wider mb-2">현재 상태</div>
-                        <div id="rail-status-card" class="bg-[#f0fdf4] border border-emerald-200 rounded-xl p-3 space-y-1.5">
+                        <div class="text-[9px] font-semibold text-[#444] uppercase tracking-wider mb-2">현재 상태</div>
+                        <div id="rail-status-card"
+                            class="bg-[#0d1f17] border border-[#16301f] rounded-xl p-3 space-y-1.5">
                             <div class="flex items-center gap-2">
                                 <span id="rail-dot" class="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                                <span id="rail-status-label" class="text-xs font-medium text-emerald-700">정상 모니화</span>
+                                <span id="rail-status-label" class="text-xs font-semibold text-emerald-400">정상
+                                    모니터링</span>
+                                <span
+                                    class="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">ACTIVE</span>
                             </div>
-                            <div class="text-[10px] text-[#737373]">신뢰도: <span id="rail-confidence" class="font-semibold text-[#000000]">—</span></div>
-                            <div class="text-[10px] text-[#737373]">총 발전량: <span id="rail-total-gen" class="font-semibold text-[#000000]">— MW</span></div>
+                            <div class="text-[10px] text-[#2d5a3d]">신뢰도: <span id="rail-confidence"
+                                    class="font-semibold text-emerald-400">—</span></div>
+                            <div class="text-[10px] text-[#2d5a3d]">총 발전량: <span id="rail-total-gen"
+                                    class="font-semibold text-emerald-400">— MW</span></div>
                         </div>
                     </div>
 
                     <!-- Section 2: 경보 이력 -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <div class="text-[9px] font-semibold text-[#a3a3a3] uppercase tracking-wider">경보 이력</div>
-                            <span id="rail-alert-count" class="hidden text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-semibold"></span>
+                            <div class="text-[9px] font-semibold text-[#444] uppercase tracking-wider">경보 이력</div>
+                            <span id="rail-alert-count"
+                                class="hidden text-[9px] bg-red-900/30 text-red-400 px-1.5 py-0.5 rounded-full font-semibold border border-red-500/20"></span>
                         </div>
                         <div id="rail-alert-list" class="space-y-1.5 max-h-24 overflow-y-auto">
-                            <p class="text-[10px] text-[#a3a3a3] italic">감지된 경보 없음</p>
+                            <p class="text-[10px] text-[#444] italic">감지된 경보 없음</p>
                         </div>
                     </div>
 
                     <!-- Section 3: 대화 내역 -->
-                    <div class="flex-1 flex flex-col min-h-0 border-t border-b border-[#e5e5e5] py-3 my-1">
+                    <div class="flex-1 flex flex-col min-h-0 border-t border-b border-[#1a1a1a] py-3 my-1">
                         <div class="flex items-center justify-between mb-2">
-                            <div class="text-[9px] font-semibold text-[#a3a3a3] uppercase tracking-wider">대화 내역</div>
-                            <button onclick="startNewChatSession()" class="text-[9px] bg-[#111111] text-white hover:bg-black px-2.5 py-1 rounded-lg font-semibold transition-all shadow-sm">
+                            <div class="text-[9px] font-semibold text-[#444] uppercase tracking-wider">대화 내역</div>
+                            <button onclick="startNewChatSession()"
+                                class="text-[9px] bg-[#e05a2b] text-white hover:bg-[#c94d22] px-2.5 py-1 rounded-lg font-bold transition-all">
                                 + 새 대화
                             </button>
                         </div>
-                        <div id="chat-session-list" class="space-y-1 overflow-y-auto flex-1 pr-1" style="scrollbar-width: thin;">
+                        <div id="chat-session-list" class="space-y-1 overflow-y-auto flex-1 pr-1"
+                            style="scrollbar-width:thin;scrollbar-color:#2a2a2a transparent;">
                             <!-- 대화 세션들이 동적으로 렌더링됨 -->
                         </div>
                     </div>
 
                     <!-- Section 4: 예약 브리핑 -->
                     <div>
-                        <div class="text-[9px] font-semibold text-[#a3a3a3] uppercase tracking-wider mb-2">예약 브리핑</div>
+                        <div class="text-[9px] font-semibold text-[#444] uppercase tracking-wider mb-2">예약 브리핑</div>
                         <div class="space-y-1.5">
-                            <div class="flex items-center gap-2 text-[10px] text-[#737373]"><span class="text-emerald-500 text-[9px]">●</span> 매일 06:00 — 일출 전 예측 브리핑</div>
-                            <div class="flex items-center gap-2 text-[10px] text-[#737373]"><span class="text-emerald-500 text-[9px]">●</span> 매일 12:00 — 주간 피크 점검</div>
-                            <div class="flex items-center gap-2 text-[10px] text-[#a3a3a3]"><span class="text-[#d4d4d4] text-[9px]">○</span> <span class="line-through">매일 18:00 — 야간 풍력</span></div>
+                            <div class="flex items-center gap-2 text-[10px] text-[#555]"><span
+                                    class="text-emerald-500 text-[9px]">●</span> 매일 06:00 — 일출 전 예측 브리핑</div>
+                            <div class="flex items-center gap-2 text-[10px] text-[#555]"><span
+                                    class="text-emerald-500 text-[9px]">●</span> 매일 12:00 — 주간 피크 점검</div>
+                            <div class="flex items-center gap-2 text-[10px] text-[#333] opacity-60"><span
+                                    class="text-[9px]">○</span> <span class="line-through">매일 18:00 — 야간 풍력</span></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 우측: 챗봇 (넓은 레이아웃) -->
-                <div class="flex-1 flex flex-col p-6 bg-white">
-                    <h4 class="text-sm font-bold text-[#000000] mb-4">AI 챗봇</h4>
-                    <div id="rail-chat-messages" class="flex-1 overflow-y-auto space-y-3 mb-4 min-h-0 text-sm"></div>
-                    <div class="flex items-center bg-[#fafafa] border border-[#e5e5e5] rounded-full px-4 py-3 gap-3 flex-shrink-0">
-                        <input type="text" id="rail-chat-input"
-                               placeholder="에이전트에게 질문하세요..."
-                               class="flex-1 bg-transparent border-none outline-none text-sm text-[#000000] placeholder-[#a3a3a3]"
-                               onkeydown="if(event.key==='Enter'&&!event.isComposing) sendRailChat()">
-                        <button onclick="sendRailChat()" class="bg-[#000000] text-white rounded-full p-2.5 flex-shrink-0 hover:bg-[#111111] transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                <!-- 우측: 챗봇 -->
+                <div class="flex-1 flex flex-col min-h-0" style="background:#0d0d0d;">
+                    <div class="flex items-center gap-2 px-5 border-b border-[#161616] flex-shrink-0"
+                        style="height:44px;">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500"
+                            style="box-shadow:0 0 6px rgba(34,197,94,0.6);"></div>
+                        <h4 class="text-xs font-bold text-[#ccc]">AI 챗봇</h4>
+                        <span
+                            class="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-[#1a1a1a] border border-[#222] text-[#444] ml-1">LSTM
+                            + KG-RAG 하이브리드 에이전트</span>
+                    </div>
+                    <div id="rail-chat-messages" class="flex-1 overflow-y-auto space-y-3 p-5 min-h-0 text-sm"
+                        style="scrollbar-width:thin;scrollbar-color:#2a2a2a transparent;"></div>
+                    <div
+                        class="flex items-center bg-[#111] border-t border-[#1a1a1a] rounded-none px-4 py-3 gap-3 flex-shrink-0">
+                        <input type="text" id="rail-chat-input" placeholder="에이전트에게 질문하세요..."
+                            class="flex-1 bg-transparent border-none outline-none text-sm text-[#ccc] placeholder-[#333]"
+                            onkeydown="if(event.key==='Enter'&&!event.isComposing) sendRailChat()">
+                        <button onclick="sendRailChat()"
+                            class="bg-[#e05a2b] hover:bg-[#c94d22] text-white rounded-lg p-2 flex-shrink-0 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                             </svg>
                         </button>
                     </div>
-                    <p class="text-[10px] text-[#a3a3a3] mt-2 text-center">LSTM + KG-RAG 하이브리드 에이전트</p>
                 </div>
             </div>
 
@@ -449,6 +768,7 @@
     <script>
         let predictionChart = null;
         let dailyChart = null;
+        let sparklineChart = null;
         let activeTab = 'home';
         let map = null;
         let mapMarkers = {};
@@ -456,60 +776,60 @@
         let alertHistory = [];
 
         const regionMockData = {
-            '제주 전역':  { gen: 82.4, solarGen: 45.2, windGen: 37.2, solar: 1.85, weather: '맑음 (평균 풍속 6.2 m/s)', ai: '전반적인 기압 분포가 안정되어 있고, 구름 유입도가 적어 제주도 전역의 신재생에너지 발전량이 준수할 것으로 관측됩니다.' },
-            '제주시':     { gen: 45.2, solarGen: 27.1, windGen: 18.1, solar: 1.95, weather: '매우 맑음 (풍속 5.1 m/s)', ai: '제주 북부 해안 영역은 구름 농도가 10% 미만으로 집계되어 태양광 발전 효율이 극대화되는 경향을 띱니다.' },
-            '서귀포시':   { gen: 37.2, solarGen: 18.6, windGen: 18.6, solar: 1.70, weather: '구름 조금 (풍속 4.5 m/s)', ai: '서귀포 남부 해안선 방향으로 남서풍 구름 유입이 일부 존재하여 태양광 발전량이 소폭 한계 수치에 도달해 있습니다.' },
-            '한경/고산':  { gen: 52.8, solarGen: 5.28, windGen: 47.52, solar: 2.10, weather: '강풍 및 맑음 (풍속 12.5 m/s)', ai: '서부 한경면 일대는 한라산 배풍 패턴에 기인한 강한 고풍속이 형성되어 풍력 발전량이 85% 이상의 피크 출력을 기록 중입니다.' },
-            '구좌/성산':  { gen: 18.5, solarGen: 4.62, windGen: 13.88, solar: 0.65, weather: '흐리고 비 (풍속 8.2 m/s)', ai: '동부 구좌읍 일대는 기압 골 통과에 따른 전선 접근으로 인해 전운량이 급변하고 있어 발전량이 최저 수준에 머물러 있습니다.' }
+            '제주 전역': { gen: 82.4, solarGen: 45.2, windGen: 37.2, solar: 1.85, weather: '맑음 (평균 풍속 6.2 m/s)', ai: '전반적인 기압 분포가 안정되어 있고, 구름 유입도가 적어 제주도 전역의 신재생에너지 발전량이 준수할 것으로 관측됩니다.' },
+            '제주시': { gen: 45.2, solarGen: 27.1, windGen: 18.1, solar: 1.95, weather: '매우 맑음 (풍속 5.1 m/s)', ai: '제주 북부 해안 영역은 구름 농도가 10% 미만으로 집계되어 태양광 발전 효율이 극대화되는 경향을 띱니다.' },
+            '서귀포시': { gen: 37.2, solarGen: 18.6, windGen: 18.6, solar: 1.70, weather: '구름 조금 (풍속 4.5 m/s)', ai: '서귀포 남부 해안선 방향으로 남서풍 구름 유입이 일부 존재하여 태양광 발전량이 소폭 한계 수치에 도달해 있습니다.' },
+            '한경/고산': { gen: 52.8, solarGen: 5.28, windGen: 47.52, solar: 2.10, weather: '강풍 및 맑음 (풍속 12.5 m/s)', ai: '서부 한경면 일대는 한라산 배풍 패턴에 기인한 강한 고풍속이 형성되어 풍력 발전량이 85% 이상의 피크 출력을 기록 중입니다.' },
+            '구좌/성산': { gen: 18.5, solarGen: 4.62, windGen: 13.88, solar: 0.65, weather: '흐리고 비 (풍속 8.2 m/s)', ai: '동부 구좌읍 일대는 기압 골 통과에 따른 전선 접근으로 인해 전운량이 급변하고 있어 발전량이 최저 수준에 머물러 있습니다.' }
         };
 
         // tool_trace 레이블 맵
         const TOOL_LABELS = {
-            tool_lookup:   '실측 데이터 조회',
-            tool_predict:  'LSTM 모델 예측 실행',
-            tool_rag:      '유사 기상 사례 검색',
+            tool_lookup: '실측 데이터 조회',
+            tool_predict: 'LSTM 모델 예측 실행',
+            tool_rag: '유사 기상 사례 검색',
             tool_kg_query: '지식 그래프 이벤트 조회',
-            tool_explain:  '영향 변수 설명 생성',
-            tool_compare:  '시점 간 발전량 비교',
+            tool_explain: '영향 변수 설명 생성',
+            tool_compare: '시점 간 발전량 비교',
         };
 
         function toggleTraceLog() {
-            const list    = document.getElementById('rail-trace-list');
+            const list = document.getElementById('rail-trace-list');
             const chevron = document.getElementById('trace-chevron');
-            const hidden  = list.classList.toggle('hidden');
+            const hidden = list.classList.toggle('hidden');
             chevron.textContent = hidden ? '▼' : '▲';
         }
 
         // ── 글로벌 상태바 갱신 ──────────────────────────────────────
         function updateGlobalStatusBar(report) {
-            const bar  = document.getElementById('global-status-bar');
-            const dot  = document.getElementById('gsb-dot');
+            const bar = document.getElementById('global-status-bar');
+            const dot = document.getElementById('gsb-dot');
             const text = document.getElementById('gsb-text');
-            const now  = new Date();
+            const now = new Date();
             document.getElementById('gsb-updated').textContent =
-                `마지막 갱신: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                `마지막 갱신: ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
             if (!report) {
-                dot.className = 'h-2 w-2 rounded-full bg-amber-400 flex-shrink-0';
+                dot.className = 'h-1.5 w-1.5 rounded-full bg-amber-400 flex-shrink-0';
                 text.textContent = '에이전트 처리 중...';
-                bar.style.backgroundColor = '#fffbeb'; bar.style.color = '#92400e';
+                bar.style.backgroundColor = '#0f0f0f'; bar.style.color = '#f59e0b';
                 return;
             }
             const conf = report.confidence || 'High';
             document.getElementById('gsb-confidence').textContent = `신뢰도: ${conf}`;
 
             if (report.trigger_active || (report.warnings && report.warnings.length > 0)) {
-                dot.className = 'h-2 w-2 rounded-full bg-red-500 flex-shrink-0';
-                text.textContent = `경보 감지 — ${(report.warnings||[]).slice(0,1).join('')}`;
-                bar.style.backgroundColor = '#fef2f2'; bar.style.color = '#dc2626';
+                dot.className = 'h-1.5 w-1.5 rounded-full bg-red-500 flex-shrink-0';
+                text.textContent = `경보 감지 — ${(report.warnings || []).slice(0, 1).join('')}`;
+                bar.style.backgroundColor = '#0f0f0f'; bar.style.color = '#ef4444';
             } else if (conf === 'Low') {
-                dot.className = 'h-2 w-2 rounded-full bg-amber-500 flex-shrink-0';
+                dot.className = 'h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0';
                 text.textContent = '트리거 감지 — 예측 불확실성 높음';
-                bar.style.backgroundColor = '#fffbeb'; bar.style.color = '#92400e';
+                bar.style.backgroundColor = '#0f0f0f'; bar.style.color = '#f59e0b';
             } else {
-                dot.className = 'h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0';
+                dot.className = 'h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0';
                 text.textContent = '에이전트 정상 모니터링 중';
-                bar.style.backgroundColor = '#f0fdf4'; bar.style.color = '#15803d';
+                bar.style.backgroundColor = '#0f0f0f'; bar.style.color = '#22c55e';
             }
         }
 
@@ -521,9 +841,9 @@
             const chevron = document.getElementById('trace-chevron');
             if (chevron) chevron.textContent = '▲';
             list.innerHTML =
-                `<div class="flex items-center justify-between bg-[#f5f5f5] border border-[#e5e5e5] rounded-xl px-3 py-2 mb-1">`
-                + `<div class="flex items-center gap-2 text-[10px] font-semibold text-[#111111]">`
-                +   `<span class="agent-thinking-dot text-amber-500">◐</span> 에이전트 추론 중...`
+                `<div class="flex items-center justify-between bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2 mb-1">`
+                + `<div class="flex items-center gap-2 text-[10px] font-semibold text-[#ccc]">`
+                + `<span class="agent-thinking-dot text-amber-500">◐</span> 에이전트 추론 중...`
                 + `</div>`
                 + `<span class="text-[9px] font-mono text-[#a3a3a3]">처리 중</span>`
                 + `</div>`;
@@ -542,15 +862,15 @@
             list.innerHTML = '';
 
             const header = document.createElement('div');
-            header.className = 'flex items-center justify-between bg-[#f5f5f5] border border-[#e5e5e5] rounded-xl px-3 py-2 mb-2';
-            header.innerHTML = `<span class="text-[10px] font-semibold text-[#111111]">✓ 추론 완료</span>`
+            header.className = 'flex items-center justify-between bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2 mb-2';
+            header.innerHTML = `<span class="text-[10px] font-semibold text-[#ccc]">✓ 추론 완료</span>`
                 + `<span class="text-[9px] font-mono text-[#737373]">${traceArray.length}단계</span>`;
             list.appendChild(header);
 
             traceArray.forEach((step, i) => {
-                const ok    = step.status === 'ok';
+                const ok = step.status === 'ok';
                 const label = TOOL_LABELS[step.tool] || step.tool;
-                const div   = document.createElement('div');
+                const div = document.createElement('div');
                 div.className = 'flex gap-2 items-start animate-fade-in';
                 div.style.animationDelay = `${i * 60}ms`;
 
@@ -558,27 +878,27 @@
                 if (step.tool === 'tool_predict' && ok) {
                     subSteps = `<div class="mt-1.5 ml-4 space-y-1">`
                         + `<div class="flex items-center gap-1.5 text-[9px] text-[#737373]"><span class="text-emerald-500">✓</span> 예측 완료 `
-                        + `<span class="bg-amber-100 text-amber-700 font-mono px-1.5 py-0.5 rounded text-[8px]">${step.timestamp||''}</span></div>`
+                        + `<span class="bg-amber-900/30 text-amber-400 font-mono px-1.5 py-0.5 rounded text-[8px]">${step.timestamp || ''}</span></div>`
                         + `</div>`;
                 } else if (step.tool === 'tool_rag' && ok) {
-                    subSteps = `<div class="mt-1.5 ml-4"><div class="flex items-center gap-1.5 text-[9px] text-[#737373]"><span class="text-emerald-500">✓</span> 유사 사례 <span class="bg-blue-100 text-blue-700 font-mono px-1.5 py-0.5 rounded text-[8px]">${step.found||0}건</span> 검색됨</div></div>`;
+                    subSteps = `<div class="mt-1.5 ml-4"><div class="flex items-center gap-1.5 text-[9px] text-[#737373]"><span class="text-emerald-500">✓</span> 유사 사례 <span class="bg-blue-900/30 text-blue-400 font-mono px-1.5 py-0.5 rounded text-[8px]">${step.found || 0}건</span> 검색됨</div></div>`;
                 } else if (step.tool === 'tool_lookup') {
-                    const chip = step.type ? `<span class="bg-[#f5f5f5] border border-[#e5e5e5] font-mono text-[#737373] px-1.5 py-0.5 rounded text-[8px]">${step.type}</span>` : '';
+                    const chip = step.type ? `<span class="bg-[#1a1a1a] border border-[#2a2a2a] font-mono text-[#737373] px-1.5 py-0.5 rounded text-[8px]">${step.type}</span>` : '';
                     subSteps = `<div class="mt-1.5 ml-4"><div class="flex items-center gap-1.5 text-[9px] text-[#737373]">${ok ? '<span class="text-emerald-500">✓</span>' : '<span class="text-[#a3a3a3]">—</span>'} ${chip}</div></div>`;
                 }
 
                 div.innerHTML =
                     `<div class="flex flex-col items-center flex-shrink-0 mt-0.5">`
                     + `<span class="text-[11px] leading-none ${ok ? 'text-emerald-500' : 'text-[#a3a3a3]'}">${ok ? '◉' : '○'}</span>`
-                    + (i < traceArray.length - 1 ? `<div class="w-px flex-1 bg-[#e5e5e5] my-0.5" style="min-height:10px;"></div>` : '')
+                    + (i < traceArray.length - 1 ? `<div class="w-px flex-1 bg-[#2a2a2a] my-0.5" style="min-height:10px;"></div>` : '')
                     + `</div>`
                     + `<div class="flex-1 min-w-0 pb-2">`
-                    +   `<div class="text-[10px] font-medium text-[#111111] leading-snug">${label}</div>`
-                    +   `<div class="flex items-center gap-1 mt-0.5">`
-                    +     `<span class="font-mono text-[8px] text-[#a3a3a3] bg-[#f5f5f5] px-1 py-0.5 rounded">${step.tool}</span>`
-                    +     `<span class="text-[8px] px-1 py-0.5 rounded ${ok ? 'text-emerald-600' : 'text-red-500'}">${step.status}</span>`
-                    +   `</div>`
-                    +   subSteps
+                    + `<div class="text-[10px] font-medium text-[#ccc] leading-snug">${label}</div>`
+                    + `<div class="flex items-center gap-1 mt-0.5">`
+                    + `<span class="font-mono text-[8px] text-[#737373] bg-[#1a1a1a] px-1 py-0.5 rounded">${step.tool}</span>`
+                    + `<span class="text-[8px] px-1 py-0.5 rounded ${ok ? 'text-emerald-600' : 'text-red-500'}">${step.status}</span>`
+                    + `</div>`
+                    + subSteps
                     + `</div>`;
                 list.appendChild(div);
             });
@@ -587,25 +907,25 @@
         // ── 레일 상태 카드 갱신 ──────────────────────────────────────
         function updateRailStatusCard(report) {
             if (!report) return;
-            const conf  = report.confidence || 'High';
-            const total = ((report.predictions?.solar_mw||0) + (report.predictions?.wind_mw||0)).toFixed(1);
-            document.getElementById('rail-confidence').textContent  = conf;
-            document.getElementById('rail-total-gen').textContent   = total + ' MW';
-            const card  = document.getElementById('rail-status-card');
-            const dot   = document.getElementById('rail-dot');
+            const conf = report.confidence || 'High';
+            const total = ((report.predictions?.solar_mw || 0) + (report.predictions?.wind_mw || 0)).toFixed(1);
+            document.getElementById('rail-confidence').textContent = conf;
+            document.getElementById('rail-total-gen').textContent = total + ' MW';
+            const card = document.getElementById('rail-status-card');
+            const dot = document.getElementById('rail-dot');
             const label = document.getElementById('rail-status-label');
-            if (report.trigger_active || (report.warnings||[]).length > 0) {
-                card.className  = 'bg-red-50 border border-red-200 rounded-xl p-3 space-y-1.5';
-                dot.className   = 'h-2 w-2 rounded-full bg-red-500 flex-shrink-0';
-                label.className = 'text-xs font-medium text-red-700'; label.textContent = '경보 발동';
+            if (report.trigger_active || (report.warnings || []).length > 0) {
+                card.className = 'bg-red-950/40 border border-red-800/30 rounded-xl p-3 space-y-1.5';
+                dot.className = 'h-2 w-2 rounded-full bg-red-500 flex-shrink-0';
+                label.className = 'text-xs font-semibold text-red-400'; label.textContent = '경보 발동';
             } else if (conf === 'Low') {
-                card.className  = 'bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1.5';
-                dot.className   = 'h-2 w-2 rounded-full bg-amber-500 flex-shrink-0';
-                label.className = 'text-xs font-medium text-amber-700'; label.textContent = '불확실성 높음';
+                card.className = 'bg-amber-950/40 border border-amber-800/30 rounded-xl p-3 space-y-1.5';
+                dot.className = 'h-2 w-2 rounded-full bg-amber-500 flex-shrink-0';
+                label.className = 'text-xs font-semibold text-amber-400'; label.textContent = '불확실성 높음';
             } else {
-                card.className  = 'bg-[#f0fdf4] border border-emerald-200 rounded-xl p-3 space-y-1.5';
-                dot.className   = 'h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0';
-                label.className = 'text-xs font-medium text-emerald-700'; label.textContent = '정상 모니터링';
+                card.className = 'bg-[#0d1f17] border border-[#16301f] rounded-xl p-3 space-y-1.5';
+                dot.className = 'h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0';
+                label.className = 'text-xs font-semibold text-emerald-400'; label.textContent = '정상 모니터링';
             }
         }
 
@@ -613,19 +933,19 @@
         function appendAlertToRail(warnings, report) {
             if (!warnings || warnings.length === 0) return;
             const now = new Date();
-            const t   = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const t = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             alertHistory.unshift({ time: t, msg: warnings[0], conf: report?.confidence });
             if (alertHistory.length > 10) alertHistory.pop();
 
-            const listEl  = document.getElementById('rail-alert-list');
+            const listEl = document.getElementById('rail-alert-list');
             const countEl = document.getElementById('rail-alert-count');
             listEl.innerHTML = '';
             countEl.textContent = alertHistory.length + '건';
             countEl.classList.remove('hidden');
             alertHistory.forEach(a => {
                 const div = document.createElement('div');
-                div.className = 'text-[10px] bg-red-50 border border-red-100 rounded-lg px-2.5 py-1.5 animate-fade-in';
-                div.innerHTML = `<span class="font-mono text-[#737373]">${a.time}</span> <span class="text-red-700">${a.msg}</span>`;
+                div.className = 'text-[10px] bg-red-950/30 border border-red-800/20 rounded-lg px-2.5 py-1.5 animate-fade-in';
+                div.innerHTML = `<span class="font-mono text-[#888]">${a.time}</span> <span class="text-red-400">${a.msg}</span>`;
                 listEl.appendChild(div);
             });
         }
@@ -634,10 +954,10 @@
         // ── 실시간 추론 타임라인 HTML 템플릿 ───────────────────────
         function createTraceTimelineHtml(traceId) {
             return `
-            <div id="${traceId}-container" class="bg-[#fafafa] border border-[#e5e5e5] rounded-2xl p-4 my-2 text-xs w-full max-w-[90%] space-y-4 animate-fade-in shadow-sm">
+            <div id="${traceId}-container" class="bg-[#111] border border-[#1e1e1e] rounded-xl p-4 my-2 text-xs w-full max-w-[90%] space-y-4 animate-fade-in">
                 <!-- Header -->
-                <div class="flex items-center justify-between border-b border-[#e5e5e5] pb-2">
-                    <div class="flex items-center gap-2 font-bold text-[#111111]">
+                <div class="flex items-center justify-between border-b border-[#1a1a1a] pb-2">
+                    <div class="flex items-center gap-2 font-bold text-[#ccc]">
                         <span class="relative flex h-2 w-2 mr-1">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -648,41 +968,41 @@
                 </div>
                 
                 <!-- Timeline Steps -->
-                <div class="relative pl-4 border-l border-[#e5e5e5] ml-2.5 space-y-4 text-[11px]" id="${traceId}-steps-list">
+                <div class="relative pl-4 border-l border-[#2a2a2a] ml-2.5 space-y-4 text-[11px]" id="${traceId}-steps-list">
                     <!-- Step 1 -->
                     <div class="relative step-node pl-1" id="${traceId}-step-1">
-                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#d4d4d4] transform -translate-x-1/2 step-status transition-all duration-300"></span>
+                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#333] transform -translate-x-1/2 step-status transition-all duration-300"></span>
                         <div class="font-medium text-[#737373] step-title">실시간 권역 발전 실측 데이터 조회 (tool_lookup)</div>
                         <div class="text-[9px] text-[#a3a3a3] mt-0.5 step-desc hidden">제주 전역의 현재 발전량 수치 및 오차 한계선 로딩 중...</div>
                     </div>
                     <!-- Step 2 -->
                     <div class="relative step-node pl-1" id="${traceId}-step-2">
-                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#d4d4d4] transform -translate-x-1/2 step-status transition-all duration-300"></span>
+                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#333] transform -translate-x-1/2 step-status transition-all duration-300"></span>
                         <div class="font-medium text-[#737373] step-title">LSTM 신경망 예측 추론 연산 (tool_predict)</div>
                         <div class="text-[9px] text-[#a3a3a3] mt-0.5 step-desc hidden">기상 패턴 데이터(온도/풍속/일사량) 기반 모델 가중치 추론 중...</div>
                     </div>
                     <!-- Step 3 -->
                     <div class="relative step-node pl-1" id="${traceId}-step-3">
-                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#d4d4d4] transform -translate-x-1/2 step-status transition-all duration-300"></span>
+                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#333] transform -translate-x-1/2 step-status transition-all duration-300"></span>
                         <div class="font-medium text-[#737373] step-title">유사 기상 및 발전 트렌드 RAG 매칭 (tool_rag)</div>
                         <div class="text-[9px] text-[#a3a3a3] mt-0.5 step-desc hidden">벡터 데이터베이스에서 유사 기상 이력 레코드 매칭 중...</div>
                     </div>
                     <!-- Step 4 -->
                     <div class="relative step-node pl-1" id="${traceId}-step-4">
-                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#d4d4d4] transform -translate-x-1/2 step-status transition-all duration-300"></span>
+                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#333] transform -translate-x-1/2 step-status transition-all duration-300"></span>
                         <div class="font-medium text-[#737373] step-title">지식 그래프 물리적 제약조건 스캔 (tool_kg_query)</div>
                         <div class="text-[9px] text-[#a3a3a3] mt-0.5 step-desc hidden">그리드 한계 규칙 및 특이 물리 현상(강풍 제약 등) 평가 중...</div>
                     </div>
                     <!-- Step 5 -->
                     <div class="relative step-node pl-1" id="${traceId}-step-5">
-                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#d4d4d4] transform -translate-x-1/2 step-status transition-all duration-300"></span>
+                        <span class="absolute -left-4 top-1.5 h-2 w-2 rounded-full bg-[#333] transform -translate-x-1/2 step-status transition-all duration-300"></span>
                         <div class="font-medium text-[#737373] step-title">SHAP 변수 기여도 설명 생성 (tool_explain)</div>
                         <div class="text-[9px] text-[#a3a3a3] mt-0.5 step-desc hidden">설명 가능한 AI(XAI) 기여도 분석 및 자율 재예측 점검 중...</div>
                     </div>
                 </div>
 
                 <!-- 최종 AI 답변 텍스트 노출 공간 -->
-                <div id="${traceId}-narrative" class="hidden border-t border-[#e5e5e5] pt-3 mt-2 text-xs text-[#111111] leading-relaxed break-words whitespace-pre-line animate-fade-in">
+                <div id="${traceId}-narrative" class="hidden border-t border-[#2a2a2a] pt-3 mt-2 text-xs text-[#ccc] leading-relaxed break-words whitespace-pre-line animate-fade-in">
                 </div>
             </div>
             `;
@@ -695,15 +1015,15 @@
 
         // ── 통합 챗봇 전송 ───────────────────────────────────────────
         async function sendRailChat() {
-            const input    = document.getElementById('rail-chat-input');
+            const input = document.getElementById('rail-chat-input');
             const messages = document.getElementById('rail-chat-messages');
-            const text     = input.value.trim();
+            const text = input.value.trim();
             if (!text) return;
 
             // 1. 사용자 메시지 말풍선 추가 (더 깔끔한 UI)
             const userBubble = document.createElement('div');
             userBubble.className = 'flex justify-end w-full mb-2';
-            userBubble.innerHTML = `<span class="bg-[#111111] text-white text-[11px] px-3.5 py-2.5 rounded-2xl rounded-tr-none max-w-[85%] break-words shadow-sm">${text}</span>`;
+            userBubble.innerHTML = `<span class="bg-[#e05a2b] text-white text-[11px] px-3.5 py-2.5 rounded-2xl rounded-tr-none max-w-[85%] break-words shadow-sm">${text}</span>`;
             messages.appendChild(userBubble);
             input.value = '';
             messages.scrollTop = messages.scrollHeight;
@@ -717,7 +1037,7 @@
             }
 
             // 2. 실시간 추론 타임라인 메시지 추가
-            const traceId = 'trace-' + Math.random().toString(36).substr(2,6);
+            const traceId = 'trace-' + Math.random().toString(36).substr(2, 6);
             const traceBubble = document.createElement('div');
             traceBubble.className = 'flex justify-start w-full mb-4';
             traceBubble.innerHTML = createTraceTimelineHtml(traceId);
@@ -771,19 +1091,19 @@
             setStepStatus(1, 'active');
 
             try {
-                const res  = await fetch('/chat', { 
-                    method:'POST', 
-                    headers:{'Content-Type':'application/json'}, 
-                    body:JSON.stringify({message: text}) 
+                const res = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
                 });
                 const data = await res.json();
-                
+
                 // 타이머 해제
                 clearInterval(timerInterval);
                 if (timerEl) timerEl.textContent = `분석 완료 (${seconds.toFixed(1)}초)`;
 
                 const traces = data.tool_trace || [];
-                
+
                 // 단계 완료 연출 시뮬레이션 (순차 딜레이 부여)
                 setStepStatus(1, 'success', '실측 데이터 로드 성공 (제주 발전 실측값 로딩)');
                 await sleep(350);
@@ -792,7 +1112,7 @@
                 await sleep(400);
                 const hasPredict = traces.some(t => t.tool === 'tool_predict');
                 setStepStatus(2, 'success', hasPredict ? 'LSTM 가중치 예측 추론 연산 성공' : '기본 발전 예측 데이터 결합 완료');
-                
+
                 setStepStatus(3, 'active');
                 await sleep(450);
                 const ragTrace = traces.find(t => t.tool === 'tool_rag');
@@ -821,7 +1141,7 @@
                 // AI 답변 페이드인
                 const narrativeBox = document.getElementById(`${traceId}-narrative`);
                 if (narrativeBox) {
-                    narrativeBox.innerHTML = formatAiNarrative(data.answer).replace(/\n/g,'<br>');
+                    narrativeBox.innerHTML = formatAiNarrative(data.answer).replace(/\n/g, '<br>');
                     narrativeBox.classList.remove('hidden');
                 }
 
@@ -843,7 +1163,7 @@
                     narrativeBox.classList.remove('hidden');
                 }
             }
-            
+
             // 세션 HTML 캐시 업데이트
             const currSession = chatSessions.find(s => s.id === activeSessionId);
             if (currSession) {
@@ -857,19 +1177,19 @@
         // ── Leaflet 지도 초기화 ──────────────────────────────────────
         function initMap() {
             if (map) return;
-            map = L.map('map', { zoomControl:true, attributionControl:false, scrollWheelZoom:false })
-                   .setView([33.38, 126.55], 10);
-            const tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom:18 }).addTo(map);
+            map = L.map('map', { zoomControl: true, attributionControl: false, scrollWheelZoom: false })
+                .setView([33.38, 126.55], 10);
+            const tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
             tiles.getContainer().classList.add('clean-map-tiles');
 
             const regionCoords = {
-                '제주시':    [33.4996, 126.5312],
-                '서귀포시':  [33.2541, 126.5601],
-                '한경/고산': [33.35,   126.18],
-                '구좌/성산': [33.45,   126.85]
+                '제주시': [33.4996, 126.5312],
+                '서귀포시': [33.2541, 126.5601],
+                '한경/고산': [33.35, 126.18],
+                '구좌/성산': [33.45, 126.85]
             };
             for (const [name, coord] of Object.entries(regionCoords)) {
-                const safeName   = name.replace('/', '-');
+                const safeName = name.replace('/', '-');
                 const customIcon = L.divIcon({
                     className: '',
                     html: `<div id="marker-pulse-${safeName}" class="h-7 w-7 rounded-full flex items-center justify-center pulse-marker-amber text-xs text-white font-bold select-none cursor-pointer">🟡</div>`,
@@ -877,18 +1197,18 @@
                 });
                 const marker = L.marker(coord, { icon: customIcon }).addTo(map);
                 marker.on('click', () => selectMapRegion(name));
-                marker.bindTooltip(`<strong>${name}</strong>`, { direction:'top', offset:[0,-5] });
+                marker.bindTooltip(`<strong>${name}</strong>`, { direction: 'top', offset: [0, -5] });
                 mapMarkers[name] = marker;
             }
         }
 
         // ── 초기화 ────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
-            const now   = new Date();
-            const year  = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2,'0');
-            const day   = String(now.getDate()).padStart(2,'0');
-            const hours = String(now.getHours()).padStart(2,'0');
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
             const localISO = `${year}-${month}-${day}T${hours}:00`;
             const picker = document.getElementById('picker-datetime');
             if (picker) picker.value = localISO;
@@ -901,7 +1221,7 @@
             switchTab('home');
             selectMapRegion('제주 전역');
             updateData();
-            
+
             // 최초 대화 기록 세션 생성 또는 로드
             loadChatSessionsFromStorage();
             if (chatSessions.length === 0) {
@@ -923,17 +1243,17 @@
         // ── 탭 전환 ───────────────────────────────────────────────────
         function switchTab(tab) {
             activeTab = tab;
-            ['view-home','view-map','view-calendar','view-agent'].forEach(id => {
+            ['view-home', 'view-map', 'view-calendar', 'view-agent'].forEach(id => {
                 document.getElementById(id)?.classList.add('hidden');
             });
 
-            const INACTIVE = 'text-xs font-medium px-5 h-full border-b-2 border-transparent text-[#737373] hover:text-[#111111] transition-all';
-            const ACTIVE   = 'text-xs font-semibold px-5 h-full border-b-2 border-[#111111] text-[#111111] transition-all';
+            const INACTIVE = 'text-[11px] font-medium px-4 py-[5px] rounded-[6px] text-[#444] hover:text-[#aaa] transition-all';
+            const ACTIVE = 'text-[11px] font-semibold px-4 py-[5px] rounded-[6px] bg-[#1e1e1e] text-white transition-all';
 
-            document.getElementById('tab-btn-home').className     = INACTIVE;
-            document.getElementById('tab-btn-map').className      = INACTIVE;
+            document.getElementById('tab-btn-home').className = INACTIVE;
+            document.getElementById('tab-btn-map').className = INACTIVE;
             document.getElementById('tab-btn-calendar').className = INACTIVE;
-            document.getElementById('tab-btn-agent').className    = INACTIVE;
+            document.getElementById('tab-btn-agent').className = INACTIVE;
 
             const opControls = document.getElementById('operator-controls-wrapper');
             opControls.style.display = (tab === 'home') ? 'flex' : 'none';
@@ -949,7 +1269,7 @@
             } else if (tab === 'calendar') {
                 document.getElementById('view-calendar').classList.remove('hidden');
                 document.getElementById('tab-btn-calendar').className = ACTIVE;
-                
+
                 // 달력 탭 진입 시 항상 현재 포커스된 날짜의 예측/실적 데이터 로드
                 if (!selectedDayNum) {
                     const today = new Date();
@@ -957,14 +1277,14 @@
                     currentYear = today.getFullYear();
                     currentMonth = today.getMonth() + 1;
                 }
-                
+
                 let solarStatus = selectedSolarStatus || '높음';
-                let windStatus  = selectedWindStatus || '보통';
-                if (selectedDayNum % 3 === 0)      { solarStatus = '보통'; }
+                let windStatus = selectedWindStatus || '보통';
+                if (selectedDayNum % 3 === 0) { solarStatus = '보통'; }
                 else if (selectedDayNum % 5 === 0) { solarStatus = '낮음'; }
-                if (selectedDayNum % 2 === 0)      { windStatus = '높음'; }
+                if (selectedDayNum % 2 === 0) { windStatus = '높음'; }
                 else if (selectedDayNum % 7 === 0) { windStatus = '낮음'; }
-                
+
                 selectCalendarDay(selectedDayNum, solarStatus, windStatus);
             } else if (tab === 'agent') {
                 document.getElementById('view-agent').classList.remove('hidden');
@@ -974,33 +1294,33 @@
 
         // ── 캘린더 상태 ───────────────────────────────────────────────
         const initDate = new Date();
-        let currentYear  = initDate.getFullYear();
+        let currentYear = initDate.getFullYear();
         let currentMonth = initDate.getMonth() + 1;
-        let selectedDayNum     = initDate.getDate();
+        let selectedDayNum = initDate.getDate();
         let selectedSolarStatus = '높음';
-        let selectedWindStatus  = '보통';
+        let selectedWindStatus = '보통';
         let selectedHourVal = 'all'; // 글로벌 시간대 선택 보존
 
         function prevMonth() { currentMonth--; if (currentMonth < 1) { currentMonth = 12; currentYear--; } updateCalendarDisplay(); }
         function nextMonth() { currentMonth++; if (currentMonth > 12) { currentMonth = 1; currentYear++; } updateCalendarDisplay(); }
 
         function updateCalendarDisplay() {
-            document.getElementById('cal-month-title').textContent   = `${currentYear}년 ${currentMonth}월 발전 예보 스케줄러`;
+            document.getElementById('cal-month-title').textContent = `${currentYear}년 ${currentMonth}월 발전 예보 스케줄러`;
             document.getElementById('cal-month-display').textContent = `${currentMonth}월 (${getMonthEnglishName(currentMonth)})`;
-            
+
             // 달을 변경했을 때, 이전 선택된 일자가 새로운 달의 범위 내에 있으면 유지하고, 없으면 1일로 설정
             const totalDays = new Date(currentYear, currentMonth, 0).getDate();
             if (!selectedDayNum || selectedDayNum > totalDays) {
                 selectedDayNum = 1;
             }
-            
+
             let solarStatus = '높음';
-            let windStatus  = '보통';
-            if (selectedDayNum % 3 === 0)      { solarStatus = '보통'; }
+            let windStatus = '보통';
+            if (selectedDayNum % 3 === 0) { solarStatus = '보통'; }
             else if (selectedDayNum % 5 === 0) { solarStatus = '낮음'; }
-            if (selectedDayNum % 2 === 0)      { windStatus = '높음'; }
+            if (selectedDayNum % 2 === 0) { windStatus = '높음'; }
             else if (selectedDayNum % 7 === 0) { windStatus = '낮음'; }
-            
+
             selectCalendarDay(selectedDayNum, solarStatus, windStatus);
         }
 
@@ -1016,19 +1336,19 @@
         }
 
         function getMonthEnglishName(m) {
-            return ['January','February','March','April','May','June','July','August','September','October','November','December'][m-1];
+            return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m - 1];
         }
 
         // 맵 권역 정보 업데이트
         function selectMapRegion(regionName) {
             const data = regionMockData[regionName] || regionMockData['제주 전역'];
-            document.getElementById('map-region-title').textContent    = regionName;
-            document.getElementById('map-info-solar-val').textContent  = `${data.solarGen.toFixed(1)} MW`;
-            document.getElementById('map-info-wind-val').textContent   = `${data.windGen.toFixed(1)} MW`;
+            document.getElementById('map-region-title').textContent = regionName;
+            document.getElementById('map-info-solar-val').textContent = `${data.solarGen.toFixed(1)} MW`;
+            document.getElementById('map-info-wind-val').textContent = `${data.windGen.toFixed(1)} MW`;
             document.getElementById('map-info-generation').textContent = `${data.gen.toFixed(1)} MW`;
-            document.getElementById('map-info-solar-rad').textContent  = `${data.solar.toFixed(2)} MJ/m²`;
-            document.getElementById('map-info-weather').textContent    = data.weather;
-            document.getElementById('map-info-ai').innerHTML           = data.ai;
+            document.getElementById('map-info-solar-rad').textContent = `${data.solar.toFixed(2)} MJ/m²`;
+            document.getElementById('map-info-weather').textContent = data.weather;
+            document.getElementById('map-info-ai').innerHTML = data.ai;
         }
 
         // Focused Carousel 형태로 달력 렌더링
@@ -1057,81 +1377,81 @@
             for (let day = 1; day <= totalDaysInMonth; day++) {
                 const cell = document.createElement('div');
                 cell.id = `cal-cell-${day}`;
-                
+
                 const dayOfWeekVal = new Date(currentYear, currentMonth - 1, day).getDay();
-                const dayOfWeekName = ['일','월','화','수','목','금','토'][dayOfWeekVal];
+                const dayOfWeekName = ['일', '월', '화', '수', '목', '금', '토'][dayOfWeekVal];
 
                 let solarStatus = '높음';
-                let windStatus  = '보통';
+                let windStatus = '보통';
 
-                if (day % 3 === 0)      { solarStatus = '보통'; }
+                if (day % 3 === 0) { solarStatus = '보통'; }
                 else if (day % 5 === 0) { solarStatus = '낮음'; }
-                if (day % 2 === 0)      { windStatus = '높음'; }
+                if (day % 2 === 0) { windStatus = '높음'; }
                 else if (day % 7 === 0) { windStatus = '낮음'; }
 
                 const solarDotColor = solarStatus === '높음' ? 'bg-emerald-400' : (solarStatus === '보통' ? 'bg-amber-400' : 'bg-[#d4d4d4]');
-                const windDotColor  = windStatus === '높음' ? 'bg-emerald-400' : (windStatus === '보통' ? 'bg-amber-400' : 'bg-[#d4d4d4]');
+                const windDotColor = windStatus === '높음' ? 'bg-emerald-400' : (windStatus === '보통' ? 'bg-amber-400' : 'bg-[#d4d4d4]');
 
-                const formattedDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
                 if (day === selectedDayNum) {
                     // 선택된 날짜: 크게 보이고 세부 드롭다운 및 발전량이 표시됨 (Carousel Focus 효과)
-                    cell.className = 'cal-day-card flex-shrink-0 w-[380px] min-h-[260px] border-2 border-[#111111] rounded-2xl p-5 cursor-default transition-all text-left bg-white shadow-xl z-20 flex flex-col justify-between';
+                    cell.className = 'cal-day-card flex-shrink-0 w-[360px] min-h-[240px] border border-black/[0.08] rounded-xl p-5 cursor-default transition-all text-left bg-white shadow-2xl z-20 flex flex-col justify-between';
                     cell.innerHTML = `
                         <div class="flex justify-between items-center">
                             <div>
-                                <span class="text-[10px] text-[#737373] font-semibold">${dayOfWeekName}요일</span>
-                                <h4 class="text-xl font-extrabold text-[#111111] mt-0.5">${day}일 예보</h4>
+                                <span class="text-[10px] text-[#aaa] font-semibold">${dayOfWeekName}요일</span>
+                                <h4 class="text-xl font-extrabold text-[#111] mt-0.5" style="letter-spacing:-0.02em;">${day}일 예보</h4>
                             </div>
                             <div class="flex gap-1.5">
-                                <span title="태양광 ${solarStatus}" class="h-2.5 w-2.5 rounded-full ${solarDotColor}"></span>
-                                <span title="풍력 ${windStatus}" class="h-2.5 w-2.5 rounded-full ${windDotColor}"></span>
+                                <span title="태양광 ${solarStatus}" class="h-2 w-2 rounded-full ${solarDotColor}"></span>
+                                <span title="풍력 ${windStatus}" class="h-2 w-2 rounded-full ${windDotColor}"></span>
                             </div>
                         </div>
-                        
-                        <div class="my-4 space-y-3 bg-[#fafafa] border border-[#e5e5e5] rounded-xl p-3.5">
+
+                        <div class="my-3 space-y-2.5 bg-[#fafafa] border border-[#f0f0f0] rounded-xl p-3">
                             <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-[#737373] font-bold uppercase tracking-wider">시간대 선택</span>
-                                <select id="cal-hour-select" onchange="onCalHourChange()" class="bg-white border border-[#e5e5e5] text-[11px] rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#111111] text-[#000000] font-semibold">
+                                <span class="text-[10px] text-[#aaa] font-bold uppercase tracking-wider">시간대 선택</span>
+                                <select id="cal-hour-select" onchange="onCalHourChange()" class="bg-white border border-[#e8e8e8] text-[11px] rounded-lg px-2 py-1 focus:outline-none focus:border-[#ccc] text-[#333] font-semibold">
                                     ${hoursOptions}
                                 </select>
                             </div>
                             <div class="grid grid-cols-2 gap-2 text-xs">
-                                <div class="bg-white border border-[#e5e5e5] p-2.5 rounded-lg text-left">
-                                    <span class="text-[9px] text-[#737373] block uppercase tracking-wider">☀️ 태양광</span>
-                                    <span id="cal-info-solar-val" class="text-sm font-bold text-[#111111] mt-0.5 block">- MW</span>
+                                <div class="bg-white border border-[#f0f0f0] p-2.5 rounded-lg text-left">
+                                    <span class="text-[9px] text-[#aaa] block uppercase tracking-wider">태양광</span>
+                                    <span id="cal-info-solar-val" class="text-sm font-bold text-[#111] mt-0.5 block" style="letter-spacing:-0.01em;">- MW</span>
                                 </div>
-                                <div class="bg-white border border-[#e5e5e5] p-2.5 rounded-lg text-left">
-                                    <span class="text-[9px] text-[#737373] block uppercase tracking-wider">💨 풍력</span>
-                                    <span id="cal-info-wind-val" class="text-sm font-bold text-[#111111] mt-0.5 block">- MW</span>
+                                <div class="bg-white border border-[#f0f0f0] p-2.5 rounded-lg text-left">
+                                    <span class="text-[9px] text-[#aaa] block uppercase tracking-wider">풍력</span>
+                                    <span id="cal-info-wind-val" class="text-sm font-bold text-[#111] mt-0.5 block" style="letter-spacing:-0.01em;">- MW</span>
                                 </div>
                             </div>
-                            <div class="flex justify-between text-[11px] text-[#525252] border-t border-[#e5e5e5] pt-2 mt-1">
-                                <span>총합: <strong id="cal-info-generation" class="text-[#111111] font-bold">- MW</strong></span>
-                                <span>일사량: <strong id="cal-info-solar" class="text-[#111111] font-bold">- MJ/m²</strong></span>
+                            <div class="flex justify-between text-[11px] text-[#888] border-t border-[#f0f0f0] pt-2">
+                                <span>총합: <strong id="cal-info-generation" class="text-[#333] font-bold">- MW</strong></span>
+                                <span>일사량: <strong id="cal-info-solar" class="text-[#333] font-bold">- MJ/m²</strong></span>
                             </div>
-                            <div class="text-[10px] text-[#737373] bg-white border border-[#e5e5e5] rounded-lg p-2 mt-1 leading-snug">
-                                기상: <span id="cal-info-weather" class="text-[#111111] font-medium">-</span>
+                            <div class="text-[10px] text-[#888] bg-white border border-[#f0f0f0] rounded-lg p-2 leading-snug">
+                                기상: <span id="cal-info-weather" class="text-[#555] font-medium">-</span>
                             </div>
                         </div>
-                        
-                        <button onclick="askAgentForCalendarDay('${formattedDate}')" class="w-full bg-[#111111] text-white hover:bg-black text-[11px] font-semibold py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm">
-                            💬 에이전트 탭에서 상세 AI 일별 분석 리포트 보기
+
+                        <button onclick="askAgentForCalendarDay('${formattedDate}')" class="w-full bg-[#111] text-white hover:bg-black text-[11px] font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5">
+                            💬 에이전트 탭에서 AI 일별 분석 리포트 보기
                         </button>
                     `;
                 } else {
                     // 선택되지 않은 날짜: 좌우에 오며 약간 작고 접혀있는 형태 (opacity 및 scale 적용)
-                    let borderClass = 'border-[#e5e5e5]';
+                    let borderClass = 'border-[#1e1e1e]';
                     if (isCurrentMonth && day === todayDay) {
-                        borderClass = 'border-2 border-[#f59e0b]';
+                        borderClass = 'border border-[#e05a2b]/40';
                     }
-                    cell.className = `cal-day-card flex-shrink-0 w-[80px] h-[130px] border ${borderClass} rounded-2xl p-3 cursor-pointer hover:border-[#a3a3a3] hover:opacity-90 transition-all text-center bg-white flex flex-col justify-between opacity-50 scale-90`;
+                    cell.className = `cal-day-card flex-shrink-0 w-[72px] h-[110px] border ${borderClass} rounded-xl p-3 cursor-pointer hover:border-[#3a3a3a] hover:opacity-80 transition-all text-center bg-[#111] flex flex-col justify-between opacity-45 scale-90`;
                     cell.innerHTML = `
-                        <div class="text-[10px] text-[#a3a3a3] font-medium">${dayOfWeekName}</div>
-                        <div class="text-xl font-bold text-[#111111] my-1">${day}</div>
+                        <div class="text-[9px] text-[#3a3a3a] font-semibold uppercase">${dayOfWeekName}</div>
+                        <div class="text-xl font-bold text-[#666] my-1">${day}</div>
                         <div class="flex justify-center gap-1 mt-1">
-                            <span title="태양광 ${solarStatus}" class="h-2 w-2 rounded-full ${solarDotColor}"></span>
-                            <span title="풍력 ${windStatus}" class="h-2 w-2 rounded-full ${windDotColor}"></span>
+                            <span title="태양광 ${solarStatus}" class="h-1.5 w-1.5 rounded-full ${solarDotColor}"></span>
+                            <span title="풍력 ${windStatus}" class="h-1.5 w-1.5 rounded-full ${windDotColor}"></span>
                         </div>
                     `;
                     cell.setAttribute('onclick', `selectCalendarDay(${day}, '${solarStatus}', '${windStatus}')`);
@@ -1139,7 +1459,7 @@
 
                 grid.appendChild(cell);
             }
-            
+
             // 중앙 맞춤 스크롤 작동
             if (selectedDayNum) {
                 const targetCell = document.getElementById(`cal-cell-${selectedDayNum}`);
@@ -1172,17 +1492,17 @@
         function jumpToDate(dateStr) {
             if (!dateStr) return;
             const [y, m, d] = dateStr.split('-').map(Number);
-            currentYear  = y;
+            currentYear = y;
             currentMonth = m;
             selectedDayNum = d;
             updateCalendarDisplay();
-            
+
             setTimeout(() => {
                 let solarStatus = '높음';
-                let windStatus  = '보통';
-                if (d % 3 === 0)      { solarStatus = '보통'; }
+                let windStatus = '보통';
+                if (d % 3 === 0) { solarStatus = '보통'; }
                 else if (d % 5 === 0) { solarStatus = '낮음'; }
-                if (d % 2 === 0)      { windStatus = '높음'; }
+                if (d % 2 === 0) { windStatus = '높음'; }
                 else if (d % 7 === 0) { windStatus = '낮음'; }
                 selectCalendarDay(d, solarStatus, windStatus);
             }, 100);
@@ -1205,7 +1525,7 @@
             try {
                 const savedSessions = localStorage.getItem('jeju_chat_sessions');
                 const savedActiveId = localStorage.getItem('jeju_active_session_id');
-                
+
                 if (savedSessions) {
                     chatSessions = JSON.parse(savedSessions);
                     activeSessionId = savedActiveId;
@@ -1309,20 +1629,19 @@
             chatSessions.forEach(session => {
                 const isActive = session.id === activeSessionId;
                 const item = document.createElement('div');
-                
-                item.className = `group flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all text-xs ${
-                    isActive 
-                        ? 'bg-[#111111] text-white font-semibold shadow-sm' 
-                        : 'bg-white hover:bg-[#fafafa] border border-transparent hover:border-[#e5e5e5] text-[#737373]'
-                }`;
+
+                item.className = `group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all text-xs ${isActive
+                    ? 'bg-[#1a1a1a] text-white font-semibold'
+                    : 'hover:bg-[#111] border border-transparent hover:border-[#1e1e1e] text-[#555]'
+                    }`;
                 item.setAttribute('onclick', `selectChatSession('${session.id}')`);
 
                 item.innerHTML = `
                     <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span class="text-[10px]">${isActive ? '💬' : '▫️'}</span>
+                        <span class="text-[9px]">${isActive ? '💬' : '▫️'}</span>
                         <span class="truncate pr-2 select-none">${session.title}</span>
                     </div>
-                    <button onclick="deleteChatSession('${session.id}', event)" class="opacity-0 group-hover:opacity-100 hover:text-rose-600 text-[11px] transition-all p-0.5 rounded flex-shrink-0 font-bold">
+                    <button onclick="deleteChatSession('${session.id}', event)" class="opacity-0 group-hover:opacity-100 hover:text-red-400 text-[11px] transition-all p-0.5 rounded flex-shrink-0 font-bold">
                         ✕
                     </button>
                 `;
@@ -1335,20 +1654,20 @@
             const hourSelect = document.getElementById('cal-hour-select');
             const hour = hourSelect ? hourSelect.value : 'all';
             const hourText = hour === 'all' ? '하루 종합' : `${hour}시`;
-            
+
             switchTab('agent');
-            
+
             const questionText = `${dateStr} ${hourText} 발전 예보 AI 일별 분석 리포트를 생성해주고 분석 요약해줘.`;
-            
+
             // 새 대화를 생성하여 질문 전송
             startNewChatSession(questionText);
         }
 
         async function selectCalendarDay(day, solarStatus, windStatus) {
             if (!day) return;
-            selectedDayNum     = day;
+            selectedDayNum = day;
             selectedSolarStatus = solarStatus;
-            selectedWindStatus  = windStatus;
+            selectedWindStatus = windStatus;
 
             // 드롭다운의 현재 값 가져오기
             const hourSelect = document.getElementById('cal-hour-select');
@@ -1358,7 +1677,7 @@
 
             renderCalendar();
 
-            const formattedDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            const formattedDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
             try {
                 // 신규 daily_data API를 통해 하루치 모든 데이터를 단 한 번의 요청으로 획득
@@ -1402,16 +1721,16 @@
                 }
 
                 const solarEl = document.getElementById('cal-info-solar-val');
-                const windEl  = document.getElementById('cal-info-wind-val');
-                const genEl   = document.getElementById('cal-info-generation');
-                const radEl   = document.getElementById('cal-info-solar');
-                const weaEl   = document.getElementById('cal-info-weather');
+                const windEl = document.getElementById('cal-info-wind-val');
+                const genEl = document.getElementById('cal-info-generation');
+                const radEl = document.getElementById('cal-info-solar');
+                const weaEl = document.getElementById('cal-info-weather');
 
-                if (solarEl) solarEl.textContent  = `${solarGen.toFixed(2)} MW`;
-                if (windEl) windEl.textContent   = `${windGen.toFixed(2)} MW`;
+                if (solarEl) solarEl.textContent = `${solarGen.toFixed(2)} MW`;
+                if (windEl) windEl.textContent = `${windGen.toFixed(2)} MW`;
                 if (genEl) genEl.textContent = `${totalGen.toFixed(2)} MW`;
-                if (radEl) radEl.textContent      = `${mockSolarRad.toFixed(2)} MJ/m²`;
-                if (weaEl) weaEl.textContent    = weather;
+                if (radEl) radEl.textContent = `${mockSolarRad.toFixed(2)} MJ/m²`;
+                if (weaEl) weaEl.textContent = weather;
 
                 window._lastCalendarReport = {
                     date: formattedDate,
@@ -1424,7 +1743,7 @@
 
             } catch (err) {
                 console.error("Failed to fetch calendar day data:", err);
-                ['cal-info-solar-val','cal-info-wind-val','cal-info-generation'].forEach(id => {
+                ['cal-info-solar-val', 'cal-info-wind-val', 'cal-info-generation'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.textContent = '- MW';
                 });
@@ -1433,31 +1752,31 @@
 
         function updateMapState(total) {
             const distributions = {
-                '제주시':    { genRatio:0.35, solarRatio:0.6, baseWind:5.0 },
-                '서귀포시':  { genRatio:0.30, solarRatio:0.4, baseWind:3.5 },
-                '한경/고산': { genRatio:0.20, solarRatio:0.1, baseWind:12.0 },
-                '구좌/성산': { genRatio:0.15, solarRatio:0.2, baseWind:6.0 }
+                '제주시': { genRatio: 0.35, solarRatio: 0.6, baseWind: 5.0 },
+                '서귀포시': { genRatio: 0.30, solarRatio: 0.4, baseWind: 3.5 },
+                '한경/고산': { genRatio: 0.20, solarRatio: 0.1, baseWind: 12.0 },
+                '구좌/성산': { genRatio: 0.15, solarRatio: 0.2, baseWind: 6.0 }
             };
             for (const [name, config] of Object.entries(distributions)) {
-                const safeName  = name.replace('/','-');
-                const regGen    = total * config.genRatio;
-                const regSolar  = regGen * config.solarRatio;
-                const regWind   = regGen - regSolar;
+                const safeName = name.replace('/', '-');
+                const regGen = total * config.genRatio;
+                const regSolar = regGen * config.solarRatio;
+                const regWind = regGen - regSolar;
                 let colorClass = 'pulse-marker-red', emoji = '🔴', statusLabel = '낮음';
-                if (regGen >= 25)      { colorClass = 'pulse-marker-emerald'; emoji = '🟢'; statusLabel = '높음'; }
-                else if (regGen >= 10) { colorClass = 'pulse-marker-amber';   emoji = '🟡'; statusLabel = '보통'; }
+                if (regGen >= 25) { colorClass = 'pulse-marker-emerald'; emoji = '🟢'; statusLabel = '높음'; }
+                else if (regGen >= 10) { colorClass = 'pulse-marker-amber'; emoji = '🟡'; statusLabel = '보통'; }
                 const el = document.getElementById(`marker-pulse-${safeName}`);
                 if (el) { el.className = `h-7 w-7 rounded-full flex items-center justify-center ${colorClass} text-xs text-white font-bold select-none cursor-pointer`; el.textContent = emoji; }
 
                 let weatherText = `맑음 (풍속 ${config.baseWind.toFixed(1)} m/s)`;
-                if (statusLabel === '낮음') weatherText = `흐리고 비 (풍속 ${(config.baseWind*0.8).toFixed(1)} m/s)`;
-                else if (statusLabel === '보통') weatherText = `구름 조금 (풍속 ${(config.baseWind*0.9).toFixed(1)} m/s)`;
-                const aiText = `제주 ${name} 지역 예상 발전: ${statusLabel} 단계. 일사량 ${(regSolar/15).toFixed(2)} MJ/m² 조건 하에 ${statusLabel === '높음' ? '피크 효율이 기대됩니다.' : statusLabel === '보통' ? '완만한 예측 곡선을 그립니다.' : '발전량이 큰 폭으로 감소할 것으로 예상됩니다.'}`;
-                regionMockData[name] = { gen:regGen, solarGen:regSolar, windGen:regWind, solar:regSolar/15, weather:weatherText, ai:aiText };
+                if (statusLabel === '낮음') weatherText = `흐리고 비 (풍속 ${(config.baseWind * 0.8).toFixed(1)} m/s)`;
+                else if (statusLabel === '보통') weatherText = `구름 조금 (풍속 ${(config.baseWind * 0.9).toFixed(1)} m/s)`;
+                const aiText = `제주 ${name} 지역 예상 발전: ${statusLabel} 단계. 일사량 ${(regSolar / 15).toFixed(2)} MJ/m² 조건 하에 ${statusLabel === '높음' ? '피크 효율이 기대됩니다.' : statusLabel === '보통' ? '완만한 예측 곡선을 그립니다.' : '발전량이 큰 폭으로 감소할 것으로 예상됩니다.'}`;
+                regionMockData[name] = { gen: regGen, solarGen: regSolar, windGen: regWind, solar: regSolar / 15, weather: weatherText, ai: aiText };
             }
             const globalSolar = total * 0.55;
             regionMockData['제주 전역'] = {
-                gen:total, solarGen:globalSolar, windGen:total-globalSolar, solar:total*0.4/15,
+                gen: total, solarGen: globalSolar, windGen: total - globalSolar, solar: total * 0.4 / 15,
                 weather: total > 60 ? '맑음 (평균 풍속 6.2 m/s)' : '흐림/야간 (평균 풍속 5.8 m/s)',
                 ai: `제주 전역 실시간 예측 피크값: ${total.toFixed(2)} MW. 전반적인 송전망 연계 상태는 양호합니다.`
             };
@@ -1467,12 +1786,12 @@
         async function updateData() {
             const dtInput = document.getElementById('picker-datetime').value;
             const now = new Date();
-            let targetTimeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:00:00`;
+            let targetTimeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:00:00`;
             if (dtInput) {
                 const dt = new Date(dtInput);
-                targetTimeStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:00:00`;
+                targetTimeStr = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:00:00`;
                 document.getElementById('top-time-display').textContent =
-                    `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:00`;
+                    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:00`;
             }
 
             showAgentThinking();
@@ -1480,120 +1799,105 @@
 
             try {
                 const response = await fetch('/chat', {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: `${targetTimeStr} 발전량 알려줘` })
                 });
                 if (!response.ok) throw new Error('API 연동 실패');
-                const data   = await response.json();
+                const data = await response.json();
                 const report = data.report;
-                const solar  = report.predictions.solar_mw;
-                const wind   = report.predictions.wind_mw;
-                const total  = solar + wind;
+                const solar = report.predictions.solar_mw;
+                const wind = report.predictions.wind_mw;
+                const total = solar + wind;
 
-                // Bento KPI 갱신
-                document.getElementById('op-today-val').textContent  = total.toFixed(1);
-                document.getElementById('op-today-sub').innerHTML    = `<span>태양광 ${solar.toFixed(1)} MW</span><span class="text-[#525252]">·</span><span>풍력 ${wind.toFixed(1)} MW</span>`;
-                document.getElementById('op-solar-val').textContent  = solar.toFixed(1);
-                document.getElementById('op-wind-val').textContent   = wind.toFixed(1);
+                // 히어로 + KPI 갱신
+                document.getElementById('op-today-val').textContent = total.toFixed(1);
+                document.getElementById('hero-solar-val').textContent = solar.toFixed(1);
+                document.getElementById('hero-wind-val').textContent = wind.toFixed(1);
+                document.getElementById('hero-conf-badge').textContent = `신뢰도 ${report.confidence || 'High'}`;
+                document.getElementById('op-solar-val').textContent = solar.toFixed(1);
+                document.getElementById('op-wind-val').textContent = wind.toFixed(1);
+
+                // 진행 바 갱신 (태양광 max 80MW, 풍력 max 200MW)
+                const solarPct = Math.min(100, (solar / 80) * 100);
+                const windPct = Math.min(100, (wind / 200) * 100);
+                document.getElementById('solar-progress-bar').style.width = `${solarPct.toFixed(0)}%`;
+                document.getElementById('wind-progress-bar').style.width = `${windPct.toFixed(0)}%`;
+                document.getElementById('solar-bar-label').textContent = `${solarPct.toFixed(0)}%`;
+                document.getElementById('wind-bar-label').textContent = `${windPct.toFixed(0)}%`;
 
                 let accuracy = 94.8;
-                if (report.confidence === 'Medium') accuracy = 91.2 + Math.random()*2.5;
-                else if (report.confidence === 'Low') accuracy = 86.5 + Math.random()*4.0;
-                else accuracy = 94.5 + Math.random()*2.0;
-                document.getElementById('op-accuracy-val').textContent    = accuracy.toFixed(1);
-                document.getElementById('op-accuracy-bar').style.width    = `${accuracy.toFixed(1)}%`;
+                if (report.confidence === 'Medium') accuracy = 91.2 + Math.random() * 2.5;
+                else if (report.confidence === 'Low') accuracy = 86.5 + Math.random() * 4.0;
+                else accuracy = 94.5 + Math.random() * 2.0;
+                document.getElementById('op-accuracy-val').textContent = accuracy.toFixed(1);
+                document.getElementById('op-accuracy-bar').style.width = `${accuracy.toFixed(1)}%`;
 
                 // 에이전트 상태 카드
-                const agentCard  = document.getElementById('op-agent-card');
-                const agentDot   = document.getElementById('op-agent-dot');
+                const agentCard = document.getElementById('op-agent-card');
+                const agentDot = document.getElementById('op-agent-dot');
                 const agentLabel = document.getElementById('op-agent-label');
                 document.getElementById('op-agent-conf').textContent = report.confidence || 'High';
                 const nowT = new Date();
-                document.getElementById('op-agent-time').textContent = `${String(nowT.getHours()).padStart(2,'0')}:${String(nowT.getMinutes()).padStart(2,'0')}`;
-                if (report.trigger_active || (report.warnings||[]).length > 0) {
-                    agentCard.className  = 'bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col gap-2';
+                document.getElementById('op-agent-time').textContent = `${String(nowT.getHours()).padStart(2, '0')}:${String(nowT.getMinutes()).padStart(2, '0')}`;
+                if (report.trigger_active || (report.warnings || []).length > 0) {
+                    agentCard.className = 'bg-red-950/40 border border-red-800/30 rounded-xl p-5 flex flex-col gap-3';
                     agentDot.style.background = '#ef4444';
-                    agentLabel.className = 'text-sm font-semibold text-red-700'; agentLabel.textContent = '경보 발동';
+                    agentLabel.className = 'text-sm font-bold text-red-400'; agentLabel.textContent = '경보 발동';
                 } else if (report.confidence === 'Low') {
-                    agentCard.className  = 'bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col gap-2';
+                    agentCard.className = 'bg-amber-950/40 border border-amber-800/30 rounded-xl p-5 flex flex-col gap-3';
                     agentDot.style.background = '#f59e0b';
-                    agentLabel.className = 'text-sm font-semibold text-amber-700'; agentLabel.textContent = '불확실성 높음';
+                    agentLabel.className = 'text-sm font-bold text-amber-400'; agentLabel.textContent = '불확실성 높음';
                 } else {
-                    agentCard.className  = 'bg-[#f0fdf4] border border-emerald-200 rounded-2xl p-5 flex flex-col gap-2';
+                    agentCard.className = 'bg-[#0d1f17] border border-[#16301f] rounded-xl p-5 flex flex-col gap-3';
                     agentDot.style.background = '#22c55e';
-                    agentLabel.className = 'text-sm font-semibold text-emerald-700'; agentLabel.textContent = '정상 모니터링';
-                }
-
-                // KG 이벤트 / 규칙
-                const opEvents = document.getElementById('op-events-container');
-                opEvents.innerHTML = '';
-                const events = report.kg_context.events || [];
-                const rules  = report.kg_context.rules  || [];
-                if (events.length === 0 && rules.length === 0) {
-                    opEvents.innerHTML = '<p class="text-xs text-[#737373] italic">감지된 특이 기상 및 물리 규칙 조건이 없습니다.</p>';
-                } else {
-                    events.forEach(e => {
-                        opEvents.innerHTML += `<div class="bg-red-50 border border-red-200 p-3 rounded-xl text-xs text-red-800"><strong>[기상 이변] ${e.event_type}</strong><p class="text-[#737373] text-[10px] mt-1">${e.description}</p></div>`;
-                    });
-                    rules.forEach(r => {
-                        opEvents.innerHTML += `<div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-800"><strong>[물리 법칙] ${r.target} 제약</strong><p class="text-[#737373] text-[10px] mt-1">조건: ${r.condition} (${r.constraint_value})</p></div>`;
-                    });
+                    agentLabel.className = 'text-sm font-bold text-emerald-400'; agentLabel.textContent = '정상 모니터링';
                 }
 
                 // 기상 인디케이터
-                document.getElementById('op-val-obs-wind').textContent  = report.trigger_active ? "18.5 m/s" : "6.2 m/s";
+                document.getElementById('op-val-obs-wind').textContent = report.trigger_active ? "18.5 m/s" : "6.2 m/s";
                 document.getElementById('op-val-obs-solar').textContent = report.predictions.solar_mw > 0 ? "1.85 MJ/m²" : "0.00 MJ/m²";
-                document.getElementById('op-val-obs-temp').textContent  = "22.5 °C";
-                document.getElementById('op-val-obs-model').textContent = report.confidence === 'High' ? "LSTM+CNN (동작)" : "LSTM Only (백업)";
+                document.getElementById('op-val-obs-temp').textContent = "22.5 °C";
+                document.getElementById('op-val-obs-model').textContent = report.confidence === 'High' ? "LSTM+CNN" : "LSTM Only";
 
-                // RAG 유사사례
-                const opRag = document.getElementById('op-rag-cases');
-                opRag.innerHTML = '';
-                if (report.similar_cases.length === 0) {
-                    opRag.innerHTML = '<p class="text-xs text-[#737373] italic md:col-span-3">유사 패턴 없음</p>';
-                } else {
-                    report.similar_cases.forEach((c, idx) => {
-                        opRag.innerHTML += `
-                            <div class="bg-white border border-[#e5e5e5] p-4 rounded-xl text-xs transition-all hover:border-[#a3a3a3]">
-                                <div class="flex justify-between font-bold text-[#000000]">
-                                    <span>유사 Rank ${idx+1}</span>
-                                    <span class="text-blue-600 font-mono text-[10px]">L2: ${c.distance.toFixed(4)}</span>
-                                </div>
-                                <p class="text-[10px] text-[#737373] mt-1 font-mono">${c.timestamp}</p>
-                                <div class="flex justify-between text-[#111111] mt-2.5 pt-2.5 border-t border-[#e5e5e5]">
-                                    <span>☀️ <strong class="text-[#000000]">${c.solar_mw.toFixed(1)} MW</strong></span>
-                                    <span>💨 <strong class="text-[#000000]">${c.wind_mw.toFixed(1)} MW</strong></span>
-                                </div>
-                            </div>`;
-                    });
-                }
+                // 경보 이력 패널 갱신 (/events API 연동)
+                fetchAndRenderHomeAlerts(report);
 
                 updateMapState(total);
                 selectMapRegion(document.getElementById('map-region-title').textContent);
                 updateChartData(report);
 
                 // 재예측 배지
-                const refined  = report.refined_report;
+                const refined = report.refined_report;
                 const mapBadge = document.getElementById('map-refinement-badge');
                 const calBadge = document.getElementById('cal-refinement-badge');
                 if (refined?.refinement_applied) {
                     const solarRange = `${refined.range_low.solar_mw.toFixed(1)} ~ ${refined.range_high.solar_mw.toFixed(1)} MW`;
-                    const windRange  = `${refined.range_low.wind_mw.toFixed(1)} ~ ${refined.range_high.wind_mw.toFixed(1)} MW`;
-                    document.getElementById('map-refine-solar').textContent = solarRange;
-                    document.getElementById('map-refine-wind').textContent  = windRange;
-                    document.getElementById('cal-refine-solar').textContent = solarRange;
-                    document.getElementById('cal-refine-wind').textContent  = windRange;
-                    mapBadge.classList.remove('hidden'); calBadge.classList.remove('hidden');
+                    const windRange = `${refined.range_low.wind_mw.toFixed(1)} ~ ${refined.range_high.wind_mw.toFixed(1)} MW`;
+                    if (document.getElementById('map-refine-solar')) document.getElementById('map-refine-solar').textContent = solarRange;
+                    if (document.getElementById('map-refine-wind')) document.getElementById('map-refine-wind').textContent = windRange;
+                    if (document.getElementById('cal-refine-solar')) document.getElementById('cal-refine-solar').textContent = solarRange;
+                    if (document.getElementById('cal-refine-wind')) document.getElementById('cal-refine-wind').textContent = windRange;
+                    if (mapBadge) mapBadge.classList.remove('hidden');
+                    if (calBadge) calBadge.classList.remove('hidden');
                     const confBadge = document.getElementById('explain-confidence-badge');
                     confBadge.textContent = '신뢰도 Low';
-                    confBadge.className   = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200';
+                    confBadge.className = 'text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200';
                 } else {
-                    mapBadge.classList.add('hidden'); calBadge.classList.add('hidden');
-                    const confBadge  = document.getElementById('explain-confidence-badge');
-                    const confColor  = report.confidence === 'High' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200';
+                    if (mapBadge) mapBadge.classList.add('hidden');
+                    if (calBadge) calBadge.classList.add('hidden');
+                    const confBadge = document.getElementById('explain-confidence-badge');
+                    const confColor = report.confidence === 'High' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200';
                     confBadge.textContent = `신뢰도 ${report.confidence}`;
-                    confBadge.className   = `text-[9px] font-bold px-2 py-0.5 rounded-full border ${confColor}`;
+                    confBadge.className = `text-[9px] font-bold px-2 py-0.5 rounded-full border ${confColor}`;
                 }
+
+                // 관제 실행 시 설명 패널 자동 열기 + 분석 실행
+                const explainBody = document.getElementById('explain-panel-body');
+                if (explainBody && explainBody.classList.contains('hidden')) {
+                    explainBody.classList.remove('hidden');
+                    document.getElementById('explain-panel-chevron').textContent = '▲';
+                }
+                runExplainAgent();
 
                 window._lastReport = report;
 
@@ -1601,81 +1905,152 @@
                 renderToolTrace(data.tool_trace || []);
                 updateRailStatusCard(report);
                 updateGlobalStatusBar(report);
-                if (report.trigger_active || (report.warnings||[]).length > 0) {
+                if (report.trigger_active || (report.warnings || []).length > 0) {
                     appendAlertToRail(report.warnings || [], report);
                 }
 
             } catch (err) {
                 console.error(err);
-                updateGlobalStatusBar({ confidence:'High' }); // fallback reset
+                updateGlobalStatusBar({ confidence: 'High' }); // fallback reset
             }
         }
 
         // ── 차트 초기화 ───────────────────────────────────────────────
         function initChart() {
-            const chartOpts = (type) => ({
-                type,
-                data: { labels:[], datasets:[] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color:'#737373', font:{ size:10 } } } },
-                    scales: {
-                        y: { beginAtZero:true, grid:{ color:'#e5e5e5' }, ticks:{ color:'#737373' } },
-                        x: { grid:{ display:false },              ticks:{ color:'#737373' } }
-                    }
+            const commonScales = {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#1e1e1e', lineWidth: 1 },
+                    ticks: { color: '#bbb', font: { size: 9 } },
+                    border: { display: false }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#bbb', font: { size: 9 } },
+                    border: { display: false }
                 }
+            };
+            const commonPlugins = {
+                legend: {
+                    labels: {
+                        color: '#888', font: { size: 10 }, boxWidth: 8, boxHeight: 2,
+                        filter: item => !item.text.startsWith('_')
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#111111', titleColor: '#ffffff',
+                    bodyColor: '#888', borderColor: '#2a2a2a',
+                    borderWidth: 1, cornerRadius: 8, padding: 8
+                }
+            };
+            predictionChart = new Chart(document.getElementById('predictionChart').getContext('2d'), {
+                type: 'line',
+                data: { labels: [], datasets: [] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: commonPlugins, scales: commonScales }
             });
-            predictionChart = new Chart(document.getElementById('predictionChart').getContext('2d'), chartOpts('line'));
-            dailyChart      = new Chart(document.getElementById('dailyChart').getContext('2d'),      chartOpts('bar'));
+            dailyChart = new Chart(document.getElementById('dailyChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: commonPlugins, scales: commonScales }
+            });
+
+            // 스파크라인 초기화
+            const sparkCtx = document.getElementById('sparklineChart');
+            if (sparkCtx) {
+                sparklineChart = new Chart(sparkCtx.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: [], datasets: [{ data: [], borderColor: 'rgba(255,255,255,0.5)', borderWidth: 1.5, fill: true, backgroundColor: 'rgba(255,255,255,0.06)', tension: 0.4, pointRadius: 0 }] },
+                    options: {
+                        responsive: false, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+                        elements: { point: { radius: 0 } },
+                        animation: { duration: 600 }
+                    }
+                });
+            }
         }
 
         function updateChartData(report = null) {
             if (!predictionChart || !dailyChart) return;
             const baseSolar = report ? report.predictions.solar_mw : 30;
-            const baseWind  = report ? report.predictions.wind_mw  : 25;
-            const labels    = Array.from({length:24}, (_,i) => `${i}시`);
-            const solarData = labels.map((_,i) => i >= 6 && i <= 18 ? parseFloat((Math.sin(Math.PI*(i-6)/12)*baseSolar*(0.85+Math.random()*0.3)).toFixed(2)) : 0);
-            const windData  = labels.map(() => parseFloat((baseWind*(0.7+Math.random()*0.6)).toFixed(2)));
+            const baseWind = report ? report.predictions.wind_mw : 25;
+            const labels = Array.from({ length: 24 }, (_, i) => `${i}시`);
+            const solarData = labels.map((_, i) => i >= 6 && i <= 18 ? parseFloat((Math.sin(Math.PI * (i - 6) / 12) * baseSolar * (0.85 + Math.random() * 0.3)).toFixed(2)) : 0);
+            const windData = labels.map(() => parseFloat((baseWind * (0.7 + Math.random() * 0.6)).toFixed(2)));
 
-            predictionChart.data.labels   = labels;
+            // 불확실성 범위 (refined_report 우선, 없으면 ±15%)
+            const refined = report?.refined_report;
+            const solarLow = refined?.refinement_applied
+                ? labels.map((_, i) => i >= 6 && i <= 18 ? parseFloat((solarData[i] * (refined.range_low.solar_mw / baseSolar)).toFixed(2)) : 0)
+                : solarData.map(v => parseFloat((v * 0.85).toFixed(2)));
+            const solarHigh = refined?.refinement_applied
+                ? labels.map((_, i) => i >= 6 && i <= 18 ? parseFloat((solarData[i] * (refined.range_high.solar_mw / baseSolar)).toFixed(2)) : 0)
+                : solarData.map(v => parseFloat((v * 1.15).toFixed(2)));
+            const windLow = windData.map(v => parseFloat((v * 0.85).toFixed(2)));
+            const windHigh = windData.map(v => parseFloat((v * 1.15).toFixed(2)));
+
+            predictionChart.data.labels = labels;
             predictionChart.data.datasets = [
-                { label:'태양광 (Solar MW)', data:solarData, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.06)', tension:0.3, fill:true },
-                { label:'풍력 (Wind MW)',    data:windData,  borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.06)',  tension:0.3, fill:true }
+                // 태양광 불확실성 밴드
+                { label: '_solar_band_low', data: solarLow, borderColor: 'transparent', backgroundColor: 'rgba(249,115,22,0.10)', fill: '+1', tension: 0.3, pointRadius: 0 },
+                { label: '_solar_band_high', data: solarHigh, borderColor: 'transparent', backgroundColor: 'rgba(249,115,22,0.10)', fill: false, tension: 0.3, pointRadius: 0 },
+                // 풍력 불확실성 밴드
+                { label: '_wind_band_low', data: windLow, borderColor: 'transparent', backgroundColor: 'rgba(59,130,246,0.10)', fill: '+1', tension: 0.3, pointRadius: 0 },
+                { label: '_wind_band_high', data: windHigh, borderColor: 'transparent', backgroundColor: 'rgba(59,130,246,0.10)', fill: false, tension: 0.3, pointRadius: 0 },
+                // 메인 라인
+                { label: '☀️ 태양광', data: solarData, borderColor: '#f97316', backgroundColor: 'transparent', borderWidth: 1.5, tension: 0.3, fill: false, pointRadius: 0, pointHoverRadius: 4 },
+                { label: '💨 풍력', data: windData, borderColor: '#3b82f6', backgroundColor: 'transparent', borderWidth: 1.5, tension: 0.3, fill: false, pointRadius: 0, pointHoverRadius: 4 }
             ];
             predictionChart.update();
 
-            const dtInput  = document.getElementById('picker-datetime').value;
-            const dt       = dtInput ? new Date(dtInput) : new Date();
-            const dailyLabels = Array.from({length:7}, (_,i) => { const d=new Date(dt); d.setDate(dt.getDate()+i); return `${d.getMonth()+1}/${d.getDate()}`; });
-            dailyChart.data.labels   = dailyLabels;
+            // 7D 바 차트
+            const dtInput = document.getElementById('picker-datetime').value;
+            const dt = dtInput ? new Date(dtInput) : new Date();
+            const dailyLabels = Array.from({ length: 7 }, (_, i) => { const d = new Date(dt); d.setDate(dt.getDate() + i); return `${d.getMonth() + 1}/${d.getDate()}`; });
+            dailyChart.data.labels = dailyLabels;
             dailyChart.data.datasets = [
-                { label:'태양광 일별', data:dailyLabels.map(() => parseFloat((baseSolar*(0.8+Math.random()*0.4)).toFixed(2))), backgroundColor:'rgba(245,158,11,0.75)', borderColor:'#f59e0b', borderWidth:1, borderRadius:4 },
-                { label:'풍력 일별',   data:dailyLabels.map(() => parseFloat((baseWind*(0.75+Math.random()*0.5)).toFixed(2))),  backgroundColor:'rgba(59,130,246,0.75)',  borderColor:'#3b82f6', borderWidth:1, borderRadius:4 }
+                { label: '☀️ 태양광', data: dailyLabels.map(() => parseFloat((baseSolar * (0.8 + Math.random() * 0.4)).toFixed(2))), backgroundColor: 'rgba(249,115,22,0.80)', borderColor: '#f97316', borderWidth: 0, borderRadius: 5, borderSkipped: false },
+                { label: '💨 풍력', data: dailyLabels.map(() => parseFloat((baseWind * (0.75 + Math.random() * 0.5)).toFixed(2))), backgroundColor: 'rgba(59,130,246,0.80)', borderColor: '#3b82f6', borderWidth: 0, borderRadius: 5, borderSkipped: false }
             ];
             dailyChart.update();
+
+            // 스파크라인 갱신 (지난 12시간 총 발전량 미니 차트)
+            if (sparklineChart) {
+                const sparkLabels = Array.from({ length: 12 }, (_, i) => `${i}h`);
+                const sparkData = sparkLabels.map((_, i) => {
+                    const h = i + 6;
+                    const s = h >= 6 && h <= 18 ? Math.sin(Math.PI * (h - 6) / 12) * baseSolar * (0.8 + Math.random() * 0.4) : 0;
+                    const w = baseWind * (0.7 + Math.random() * 0.6);
+                    return parseFloat((s + w).toFixed(1));
+                });
+                sparklineChart.data.labels = sparkLabels;
+                sparklineChart.data.datasets[0].data = sparkData;
+                sparklineChart.update();
+            }
         }
 
         // ── 예측 설명 에이전트 ────────────────────────────────────────
         async function runExplainAgent() {
             const placeholder = document.getElementById('explain-placeholder');
             const varsBox = document.getElementById('explain-vars-box');
-            const ragBox  = document.getElementById('explain-rag-box');
-            const kgBox   = document.getElementById('explain-kg-box');
-            const narBox  = document.getElementById('explain-narrative-box');
-            const refBox  = document.getElementById('explain-refinement-box');
+            const ragBox = document.getElementById('explain-rag-box');
+            const kgBox = document.getElementById('explain-kg-box');
+            const narBox = document.getElementById('explain-narrative-box');
+            const refBox = document.getElementById('explain-refinement-box');
             placeholder.textContent = '🧠 예측 설명 에이전트가 분석 중...';
             placeholder.classList.remove('hidden');
             [varsBox, ragBox, kgBox, narBox, refBox].forEach(el => el.classList.add('hidden'));
 
             const dtInput = document.getElementById('picker-datetime').value;
-            const ts = dtInput ? dtInput.replace('T',' ') + ':00' : '2026-06-14 14:00:00';
+            const ts = dtInput ? dtInput.replace('T', ' ') + ':00' : '2026-06-14 14:00:00';
 
             try {
-                const res  = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message:`${ts} 발전량 왜 이렇게 예측됐어? 이유 원인 설명해줘` }) });
+                const res = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `${ts} 발전량 왜 이렇게 예측됐어? 이유 원인 설명해줘` }) });
                 if (!res.ok) throw new Error('API 오류');
-                const data        = await res.json();
+                const data = await res.json();
                 const explanation = data.explanation;
-                const report      = data.report || window._lastReport;
+                const report = data.report || window._lastReport;
 
                 placeholder.classList.add('hidden');
 
@@ -1683,40 +2058,40 @@
                 if (refined?.refinement_applied) {
                     document.getElementById('explain-refinement-reason').textContent = refined.refinement_reason;
                     document.getElementById('explain-solar-range').textContent = `${refined.range_low.solar_mw.toFixed(1)} ~ ${refined.range_high.solar_mw.toFixed(1)} MW`;
-                    document.getElementById('explain-wind-range').textContent  = `${refined.range_low.wind_mw.toFixed(1)} ~ ${refined.range_high.wind_mw.toFixed(1)} MW`;
+                    document.getElementById('explain-wind-range').textContent = `${refined.range_low.wind_mw.toFixed(1)} ~ ${refined.range_high.wind_mw.toFixed(1)} MW`;
                     refBox.classList.remove('hidden');
                 }
 
                 if (explanation) {
                     const varsList = document.getElementById('explain-vars-list');
                     varsList.innerHTML = '';
-                    (explanation.variable_contributions || []).slice(0,5).forEach(v => {
-                        const barW     = Math.min(100, Math.abs(v.z_score)*30);
+                    (explanation.variable_contributions || []).slice(0, 5).forEach(v => {
+                        const barW = Math.min(100, Math.abs(v.z_score) * 30);
                         const barColor = v.impact_level === '강한 영향' ? '#111111' : v.impact_level === '중간 영향' ? '#737373' : '#d4d4d4';
-                        const arrow    = v.z_score >= 0 ? '▲' : '▼';
+                        const arrow = v.z_score >= 0 ? '▲' : '▼';
                         varsList.innerHTML += `<div class="flex items-center gap-2">`
                             + `<span class="text-[9px] text-[#737373] w-14 flex-shrink-0">${v.variable}</span>`
                             + `<div class="flex-1 bg-[#f5f5f5] rounded-full h-1.5 overflow-hidden"><div style="width:${barW}%;background:${barColor}" class="h-full rounded-full transition-all"></div></div>`
                             + `<span class="text-[9px] font-mono text-[#111111] w-16 text-right">${v.current_value}${v.unit} ${arrow}</span>`
                             + `<span class="text-[9px] text-[#a3a3a3] w-14">${v.impact_level}</span></div>`;
                     });
-                    if ((explanation.variable_contributions||[]).length > 0) varsBox.classList.remove('hidden');
+                    if ((explanation.variable_contributions || []).length > 0) varsBox.classList.remove('hidden');
 
-                    const ragText = (explanation.rag_comparison||'').replace(/\*\*/g,'');
+                    const ragText = (explanation.rag_comparison || '').replace(/\*\*/g, '');
                     if (ragText) { document.getElementById('explain-rag-text').textContent = ragText; ragBox.classList.remove('hidden'); }
 
                     const kgListEl = document.getElementById('explain-kg-list');
                     kgListEl.innerHTML = '';
-                    (explanation.kg_rules_applied||[]).forEach(rule => {
+                    (explanation.kg_rules_applied || []).forEach(rule => {
                         kgListEl.innerHTML += `<div class="text-[10px] text-[#737373] bg-[#f5f5f5] border border-[#e5e5e5] rounded-lg px-2.5 py-1.5">${rule}</div>`;
                     });
-                    if ((explanation.kg_rules_applied||[]).length > 0) kgBox.classList.remove('hidden');
+                    if ((explanation.kg_rules_applied || []).length > 0) kgBox.classList.remove('hidden');
 
-                    const narrative = ((explanation.solar_explanation||'') + '\n\n' + (explanation.wind_explanation||'')).replace(/\*\*/g,'');
+                    const narrative = ((explanation.solar_explanation || '') + '\n\n' + (explanation.wind_explanation || '')).replace(/\*\*/g, '');
                     document.getElementById('explain-narrative-text').textContent = narrative;
                     narBox.classList.remove('hidden');
                 } else {
-                    document.getElementById('explain-narrative-text').textContent = (data.answer||'').replace(/<br>/g,'\n').replace(/<[^>]*>/g,'').replace(/\*\*/g,'');
+                    document.getElementById('explain-narrative-text').textContent = (data.answer || '').replace(/<br>/g, '\n').replace(/<[^>]*>/g, '').replace(/\*\*/g, '');
                     narBox.classList.remove('hidden');
                 }
 
@@ -1727,12 +2102,68 @@
             }
         }
 
+        // ── 설명 패널 토글 ────────────────────────────────────────────
+        function toggleExplainPanel() {
+            const body = document.getElementById('explain-panel-body');
+            const chevron = document.getElementById('explain-panel-chevron');
+            const hidden = body.classList.toggle('hidden');
+            chevron.textContent = hidden ? '▼' : '▲';
+        }
+
+        // ── 관제 홈 경보 이력 패널 갱신 ──────────────────────────────
+        async function fetchAndRenderHomeAlerts(report) {
+            const listEl = document.getElementById('home-alert-list');
+            const badgeEl = document.getElementById('home-alert-badge');
+            if (!listEl) return;
+
+            // 현재 세션 경보 (report.warnings)
+            const sessionWarnings = [];
+            if (report?.trigger_active || (report?.warnings || []).length > 0) {
+                const now = new Date();
+                const t = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                (report.warnings || []).forEach(w => sessionWarnings.push({ time: t, msg: w, type: 'warning' }));
+            }
+
+            // /events API에서 이력 조회
+            let eventsData = [];
+            try {
+                const res = await fetch('/events');
+                if (res.ok) {
+                    const json = await res.json();
+                    eventsData = (json.events || []).slice(0, 8);
+                }
+            } catch (_) { }
+
+            const allItems = [...sessionWarnings, ...eventsData.map(e => ({
+                time: (e.timestamp || '').slice(11, 16),
+                msg: e.reason || e.type || '이벤트',
+                type: e.type
+            }))];
+
+            if (allItems.length === 0) {
+                listEl.innerHTML = '<p class="text-[11px] text-[#a3a3a3] italic">감지된 경보 없음</p>';
+                badgeEl.classList.add('hidden');
+                return;
+            }
+
+            badgeEl.textContent = `${allItems.length}건`;
+            badgeEl.classList.remove('hidden');
+            listEl.innerHTML = '';
+            allItems.forEach(item => {
+                const isAlert = item.type === 'alert' || (item.msg && item.msg.length > 0 && !item.type);
+                const div = document.createElement('div');
+                div.className = `text-[10px] rounded-lg px-3 py-2 animate-fade-in ${isAlert ? 'bg-red-950/30 border border-red-800/20' : 'bg-amber-950/30 border border-amber-800/20'}`;
+                div.innerHTML = `<span class="font-mono text-[#444]">${item.time || '--:--'}</span> <span class="${isAlert ? 'text-red-400' : 'text-amber-400'} font-medium">${item.msg}</span>`;
+                listEl.appendChild(div);
+            });
+        }
+
         // 인라인 채팅 (레거시 — 레일로 통합됨, 참조용 유지)
         async function sendInlineChat(viewType) {
             const region = document.getElementById('map-region-title').textContent;
-            const gen    = document.getElementById('map-info-generation').textContent;
-            const ctx    = viewType === 'map' ? `[지역: ${region}, 발전량: ${gen}] ` : '';
-            const input  = document.getElementById('rail-chat-input');
+            const gen = document.getElementById('map-info-generation').textContent;
+            const ctx = viewType === 'map' ? `[지역: ${region}, 발전량: ${gen}] ` : '';
+            const input = document.getElementById('rail-chat-input');
             if (!input.value.trim()) return;
             input.value = ctx + input.value;
             sendRailChat();
@@ -1744,4 +2175,5 @@
         }
     </script>
 </body>
+
 </html>
