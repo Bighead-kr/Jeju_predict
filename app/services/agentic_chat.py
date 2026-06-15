@@ -26,12 +26,16 @@ SYSTEM_PROMPT = """당신은 제주도 신재생에너지 발전량 예측 시�
 - 수치는 반드시 포함하되 대화체로 자연스럽게 3~5문장으로 답변하세요
 - 이모지를 적절히 활용하세요 (☀️ 💨 ⚡ ✅ ⚠️)
 - 실적 데이터면 "예측"이 아닌 "실제 발전량"으로 표현하세요
-- 실측 데이터 범위: ~2025-12-31 (이 범위→tool_lookup, 이후→tool_predict)"""
+- 실측 데이터 범위: ~2025-12-31 (이 범위→tool_lookup, 이후→tool_predict)
+- 인사말/도움말 질문은 도구 사용 없이 바로 답변하세요
+- 특정 시간 발전량 요청: timestamp를 YYYY-MM-DD HH:MM:SS 형식으로 tool_lookup 호출
+- 하루 전체 발전량 요청: timestamp를 YYYY-MM-DD (날짜만) 형식으로 tool_lookup 호출
+- 하루 합산 데이터면 "하루 전체 발전량"으로, 특정 시간이면 "N시 발전량"으로 표현하세요"""
 
-# 폴백용 키워드 (Claude API 실패 시)
+# 폴백용 키워드
 _KW = {
-    "greet":   ["안녕", "반가워", "하이", "hello"],
-    "help":    ["도움말", "뭐 할 수 있", "기능", "사용법"],
+    "greet": ["안녕", "반가워", "하이", "hello"],
+    "help":  ["도움말", "뭐 할 수 있", "기능", "사용법"],
 }
 
 TOOLS = [
@@ -39,14 +43,20 @@ TOOLS = [
         "name": "tool_lookup",
         "description": (
             "CSV에서 실제 발전량 실적 데이터를 조회합니다. "
-            "2025-12-31 이전 날짜의 실제(과거) 발전량을 물어볼 때 사용하세요."
+            "2025-12-31 이전 날짜의 실제(과거) 발전량을 물어볼 때 사용하세요. "
+            "특정 시간 조회: timestamp를 'YYYY-MM-DD HH:MM:SS' 형식으로 전달. "
+            "하루 전체 합산 조회: timestamp를 'YYYY-MM-DD' (날짜만) 형식으로 전달."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "timestamp": {
                     "type": "string",
-                    "description": "조회할 날짜/시간 (YYYY-MM-DD HH:MM:SS 형식)"
+                    "description": (
+                        "조회할 날짜/시간. "
+                        "특정 시간: YYYY-MM-DD HH:MM:SS (예: 2025-12-09 12:00:00). "
+                        "하루 전체: YYYY-MM-DD (예: 2025-12-09)."
+                    )
                 }
             },
             "required": ["timestamp"]
@@ -234,7 +244,6 @@ class AgenticChatService:
         messages = [{"role": h["role"], "content": h["content"]} for h in self.history[-8:]]
         messages.append({"role": "user", "content": message})
 
-        # 턴 내 공유 상태
         state: Dict[str, Any] = {
             "report":      self.last_report,
             "window":      self.last_window,
@@ -243,7 +252,7 @@ class AgenticChatService:
         }
 
         answer = ""
-        for _ in range(6):  # 최대 6 스텝
+        for _ in range(6):
             try:
                 response = _claude.messages.create(
                     model=MODEL, max_tokens=800,
@@ -294,7 +303,6 @@ class AgenticChatService:
     # ── 도구 실행 디스패처 ────────────────────────────────────────────────────
 
     def _execute_tool(self, name: str, inputs: dict, state: dict, trace: list) -> str:
-        """도구 실행 → JSON 문자열 반환 (tool_result content)"""
         timestamp = (
             inputs.get("timestamp")
             or self.last_timestamp
@@ -313,11 +321,13 @@ class AgenticChatService:
                     "kg_context": {"events": [], "rules": []},
                     "trigger_active": False, "is_actual": True,
                 }
+                data_type = actual.get("type", "hourly")
+                label = "하루 합산" if data_type == "daily" else f"{timestamp[11:13]}시"
                 return json.dumps({
                     "status": "ok", "timestamp": timestamp,
+                    "data_type": data_type, "label": label,
                     "solar_mw": actual["solar_mw"], "wind_mw": actual["wind_mw"],
                     "total_mw": actual["solar_mw"] + actual["wind_mw"],
-                    "type": actual.get("type", "hourly"),
                 }, ensure_ascii=False)
             return json.dumps({"status": "not_found",
                                "message": "해당 날짜의 실측 데이터가 없습니다."}, ensure_ascii=False)
@@ -344,7 +354,7 @@ class AgenticChatService:
             if state.get("report"):
                 state["report"]["similar_cases"] = cases
             top = [{"timestamp": c.get("timestamp", ""), "solar_mw": c.get("solar_mw", 0),
-                    "wind_mw": c.get("wind_mw", 0), "similarity": c.get("similarity", 0)}
+                    "wind_mw": c.get("wind_mw", 0)}
                    for c in cases[:3]]
             return json.dumps({"status": "ok", "cases_found": len(cases),
                                "top_cases": top}, ensure_ascii=False)
@@ -462,20 +472,29 @@ class AgenticChatService:
     # ── 도구 구현 ─────────────────────────────────────────────────────────────
 
     def _tool_lookup(self, timestamp: str):
+        """CSV 실적 조회
+        - timestamp가 날짜만(YYYY-MM-DD, 길이 10) → 하루 합산
+        - timestamp가 시간 포함(YYYY-MM-DD HH:MM:SS) → 해당 시간
+        """
         try:
             if self._df is None: raise ValueError("CSV 미로드")
-            dt   = datetime.strptime(timestamp[:10], "%Y-%m-%d")
-            hour = int(timestamp[11:13]) if len(timestamp) > 10 else 14
-            row  = self._df[(self._df["date"].dt.date == dt.date()) & (self._df["hour"] == hour)]
-            if row.empty:
-                day = self._df[self._df["date"].dt.date == dt.date()]
-                if day.empty: return None, {"tool": "tool_lookup", "status": "not_found"}
-                result = {"solar_mw": float(day["solar_mw"].sum()),
-                          "wind_mw":  float(day["wind_mw"].sum()), "type": "daily"}
-            else:
-                result = {"solar_mw": float(row.iloc[0]["solar_mw"]),
-                          "wind_mw":  float(row.iloc[0]["wind_mw"]), "type": "hourly"}
-            return result, {"tool": "tool_lookup", "status": "ok", "type": result["type"]}
+            dt = datetime.strptime(timestamp[:10], "%Y-%m-%d")
+
+            # 시간이 명시된 경우
+            if len(timestamp) > 10:
+                hour = int(timestamp[11:13])
+                row  = self._df[(self._df["date"].dt.date == dt.date()) & (self._df["hour"] == hour)]
+                if not row.empty:
+                    result = {"solar_mw": float(row.iloc[0]["solar_mw"]),
+                              "wind_mw":  float(row.iloc[0]["wind_mw"]), "type": "hourly"}
+                    return result, {"tool": "tool_lookup", "status": "ok", "type": "hourly"}
+
+            # 날짜만이면 하루 합산
+            day = self._df[self._df["date"].dt.date == dt.date()]
+            if day.empty: return None, {"tool": "tool_lookup", "status": "not_found"}
+            result = {"solar_mw": float(day["solar_mw"].sum()),
+                      "wind_mw":  float(day["wind_mw"].sum()), "type": "daily"}
+            return result, {"tool": "tool_lookup", "status": "ok", "type": "daily"}
         except Exception as e:
             return None, {"tool": "tool_lookup", "status": "error", "error": str(e)}
 
@@ -531,23 +550,21 @@ class AgenticChatService:
             if m: return fmt(m)
         if "내일" in text: now += timedelta(days=1)
         elif "어제" in text: now -= timedelta(days=1)
-        elif "이번달" in text or "이번 달" in text: now = now.replace(day=1)
-        elif "지난달" in text or "지난 달" in text: now = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
-        elif "지난주" in text or "지난 주" in text: now -= timedelta(weeks=1)
         h = re.search(r"(\d{1,2})시", text)
         return now.strftime(f"%Y-%m-%d {int(h.group(1)) if h else 14:02d}:00:00")
 
     def _build_window(self, timestamp: str) -> np.ndarray:
-        # KMA 실데이터 시도
         kma_window = self._kma.build_weather_window(timestamp)
         if kma_window is not None:
             return kma_window
 
-        # KMA 미설정/실패 시 결정론적 시뮬레이션으로 폴백
         try:
             dt = datetime.strptime(timestamp[:19], "%Y-%m-%d %H:%M:%S")
         except Exception:
-            dt = datetime.now()
+            try:
+                dt = datetime.strptime(timestamp[:10], "%Y-%m-%d")
+            except Exception:
+                dt = datetime.now()
         rng = np.random.default_rng(int(hashlib.md5(timestamp.encode()).hexdigest(), 16) % 10000)
         rows = []
         for i in range(24):
