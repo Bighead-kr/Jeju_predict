@@ -1,13 +1,20 @@
 """
 멀티스텝 에이전트 — Claude function calling 기반 동적 도구 선택
-도구: tool_lookup / tool_predict / tool_rag_search / tool_kg_query / tool_explain / tool_compare
+도구: tool_lookup / tool_predict / tool_rag_search / tool_kg_query /
+      tool_explain / tool_compare / tool_validate / tool_notify
 """
 import re, os, json, hashlib
+import math
 import numpy as np
 import pandas as pd
 import anthropic
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
+
+from app.services.kma_service import KMAService
+from app.services.validator import validate_predictions
+from app.services import event_store, notifier
+from app.services.memory import get_memory
 
 _claude     = anthropic.Anthropic()
 MODEL       = "claude-sonnet-4-6"
@@ -135,6 +142,49 @@ TOOLS = [
             "required": ["timestamp1", "timestamp2"]
         }
     },
+    {
+        "name": "tool_validate",
+        "description": (
+            "예측값의 물리 규칙 위반 여부를 검증합니다. "
+            "야간 태양광, 풍속 cut-in/cut-out, z-score 이상치, 설비 용량 상한을 확인합니다. "
+            "tool_predict 호출 직후 검증이 필요할 때 사용하세요."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "timestamp": {
+                    "type": "string",
+                    "description": "검증할 예측의 날짜/시간 (YYYY-MM-DD HH:MM:SS 형식)"
+                }
+            },
+            "required": ["timestamp"]
+        }
+    },
+    {
+        "name": "tool_notify",
+        "description": (
+            "경보 이메일을 발송하고 이벤트를 기록합니다. "
+            "트리거 조건 감지 또는 심각한 이상 상황 발생 시 운영자에게 알릴 때 사용하세요."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "event_type": {
+                    "type": "string",
+                    "description": "이벤트 유형 (trigger / alert / info)"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "경보 발생 원인 설명"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "description": "이벤트 기준 시각 (YYYY-MM-DD HH:MM:SS)"
+                }
+            },
+            "required": ["event_type", "reason"]
+        }
+    },
 ]
 
 
@@ -144,6 +194,7 @@ class AgenticChatService:
     def __init__(self, agent, explainer):
         self.agent     = agent
         self.explainer = explainer
+        self._kma      = KMAService()
         self.history: List[Dict] = []
         self.last_report    = None
         self.last_timestamp = None
@@ -354,6 +405,58 @@ class AgenticChatService:
                 "total_diff": (s2 + w2v) - (bs + bw),
             }, ensure_ascii=False)
 
+        elif name == "tool_validate":
+            window = state.get("window") or self._build_window(timestamp)
+            report = state.get("report")
+            if not report:
+                return json.dumps({"status": "error",
+                                   "message": "먼저 tool_predict 또는 tool_lookup을 호출하세요."}, ensure_ascii=False)
+            preds = report.get("predictions", {})
+            result = validate_predictions(
+                solar_mw=preds.get("solar_mw", 0.0),
+                wind_mw=preds.get("wind_mw", 0.0),
+                current_window=window,
+            )
+            if not result["passed"]:
+                report["predictions"].update(result["corrected"])
+                report["warnings"] = report.get("warnings", []) + result["violations"]
+            trace.append({"tool": "tool_validate", "status": "ok",
+                          "passed": result["passed"], "violations": result["violations"]})
+            return json.dumps({
+                "status": "ok",
+                "passed": result["passed"],
+                "violations": result["violations"],
+                "corrected": result["corrected"],
+            }, ensure_ascii=False)
+
+        elif name == "tool_notify":
+            ev_type = inputs.get("event_type", "alert")
+            reason  = inputs.get("reason", "")
+            report  = state.get("report")
+            preds   = report.get("predictions", {}) if report else {}
+            event_store.append_event(
+                event_type=ev_type,
+                reason=reason,
+                action="agent_triggered",
+                prediction_after=preds,
+            )
+            sent = notifier.send_trigger_alert(
+                event_type=ev_type,
+                reason=reason,
+                predictions=preds,
+                timestamp=timestamp,
+            )
+            if report:
+                get_memory().store({**report, "timestamp": timestamp})
+            trace.append({"tool": "tool_notify", "status": "ok",
+                          "email_sent": sent, "event_type": ev_type})
+            return json.dumps({
+                "status": "ok",
+                "event_recorded": True,
+                "email_sent": sent,
+                "event_type": ev_type,
+            }, ensure_ascii=False)
+
         return json.dumps({"status": "error", "message": f"알 수 없는 도구: {name}"}, ensure_ascii=False)
 
     # ── 도구 구현 ─────────────────────────────────────────────────────────────
@@ -435,21 +538,29 @@ class AgenticChatService:
         return now.strftime(f"%Y-%m-%d {int(h.group(1)) if h else 14:02d}:00:00")
 
     def _build_window(self, timestamp: str) -> np.ndarray:
-        try: dt = datetime.strptime(timestamp[:19], "%Y-%m-%d %H:%M:%S")
-        except: dt = datetime.now()
+        # KMA 실데이터 시도
+        kma_window = self._kma.build_weather_window(timestamp)
+        if kma_window is not None:
+            return kma_window
+
+        # KMA 미설정/실패 시 결정론적 시뮬레이션으로 폴백
+        try:
+            dt = datetime.strptime(timestamp[:19], "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            dt = datetime.now()
         rng = np.random.default_rng(int(hashlib.md5(timestamp.encode()).hexdigest(), 16) % 10000)
         rows = []
         for i in range(24):
             th = (dt.hour - 23 + i) % 24
             if 6 <= th <= 18:
-                sun = float(np.clip(np.sin(np.pi * (th - 6) / 12) * 0.9 + rng.uniform(-0.05, 0.05), 0, 1))
+                sun = float(np.clip(math.sin(math.pi * (th - 6) / 12) * 0.9 + rng.uniform(-0.05, 0.05), 0, 1))
             else:
                 sun = 0.0
-            ws = float(max(0.5, rng.uniform(2, 16) + np.sin(i / 24 * np.pi * 2) * 2.5 + rng.uniform(-0.5, 0.5)))
-            wa = rng.uniform(0, 2 * np.pi)
-            rows.append([ws, float(np.sin(wa)), float(np.cos(wa)),
-                         float(20 + np.sin((th - 8) / 24 * np.pi * 2) * 5 + rng.uniform(-0.5, 0.5)),
-                         float(60 - np.sin((th - 8) / 24 * np.pi * 2) * 15 + rng.uniform(-2, 2)),
+            ws = float(max(0.5, rng.uniform(2, 16) + math.sin(i / 24 * math.pi * 2) * 2.5 + rng.uniform(-0.5, 0.5)))
+            wa = rng.uniform(0, 2 * math.pi)
+            rows.append([ws, float(math.sin(wa)), float(math.cos(wa)),
+                         float(20 + math.sin((th - 8) / 24 * math.pi * 2) * 5 + rng.uniform(-0.5, 0.5)),
+                         float(60 - math.sin((th - 8) / 24 * math.pi * 2) * 15 + rng.uniform(-2, 2)),
                          float(1010 + rng.uniform(-5, 5)), float(rng.integers(0, 10)),
                          sun, float(sun * 2.8)])
         return np.array(rows)

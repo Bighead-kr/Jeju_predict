@@ -2,7 +2,8 @@ from dotenv import load_dotenv
 import os
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
-from fastapi import FastAPI, HTTPException
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -12,17 +13,31 @@ import numpy as np
 from app.agent import JejuPredictAgent
 from app.services.explainer import ExplainerService
 from app.services.agentic_chat import AgenticChatService
+from app.services import event_store, monitor
+from app.services import report_gen
 
-app = FastAPI(
-    title="제주도 신재생에너지 예측 에이전트 시스템",
-    description="LSTM 예측 모델 + KG-RAG 하이브리드 에이전트 시스템 (자율 재예측 / 멀티스텝 Q&A / 예측 설명 탑재)",
-    version="2.0.0"
-)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    monitor.init(agent, agentic_chat)
+    monitor.start()
+    yield
+    # shutdown
+    monitor.stop()
+
 
 # ── 싱글톤 서비스 초기화 ────────────────────────────────────────────────────
 agent = JejuPredictAgent()
 explainer = ExplainerService()
 agentic_chat = AgenticChatService(agent=agent, explainer=explainer)
+
+app = FastAPI(
+    title="제주도 신재생에너지 예측 에이전트 시스템",
+    description="LSTM 예측 모델 + KG-RAG 하이브리드 에이전트 시스템 (자율 재예측 / 멀티스텝 Q&A / 예측 설명 탑재)",
+    version="2.0.0",
+    lifespan=lifespan,
+)
 
 # index.html이 위치할 templates 폴더 경로 설정
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
@@ -195,13 +210,56 @@ async def chat_interaction(chat_data: ChatInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/events", summary="경보·트리거 이벤트 이력 조회 (A-3)")
+async def get_events(
+    limit: int = Query(50, ge=1, le=500),
+    event_type: Optional[str] = Query(None, description="trigger / alert / info"),
+):
+    return {"events": event_store.get_events(limit=limit, event_type=event_type)}
+
+
+@app.get("/report/{date}", summary="일간 운영 리포트 조회 또는 생성 (A-7)")
+async def get_report(date: str):
+    """
+    저장된 리포트가 있으면 반환, 없으면 /daily_data 기반으로 즉시 생성 후 반환.
+    """
+    try:
+        saved = report_gen.load_report(date)
+        if saved:
+            return saved
+
+        # 즉시 생성
+        from datetime import datetime as _dt
+        _dt.strptime(date, "%Y-%m-%d")  # 날짜 형식 검증
+
+        daily = await get_daily_data(date=date)
+        events = event_store.get_events(limit=200)
+        date_events = [
+            e for e in events
+            if e.get("timestamp", "").startswith(date)
+        ]
+        report = report_gen.generate_report(
+            date=date,
+            hourly=daily.get("hourly", []),
+            events=date_events,
+            is_actual=daily.get("is_actual", False),
+        )
+        return report
+    except ValueError:
+        raise HTTPException(status_code=400, detail="날짜 형식은 YYYY-MM-DD 이어야 합니다.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/health", summary="서버 상태 체크")
 async def health_check():
     return {
         "status": "healthy",
         "version": "2.0.0",
-        "features": ["self_refinement", "agentic_chat", "explainability"],
+        "features": ["self_refinement", "agentic_chat", "explainability",
+                     "event_store", "monitor", "notifier", "memory", "report_gen"],
         "model_loaded": agent.model is not None,
         "faiss_loaded": agent.rag_service.index is not None,
         "kg_loaded": agent.kg_service.graph is not None,
+        "scheduler_running": monitor._scheduler.running if monitor._scheduler else False,
     }

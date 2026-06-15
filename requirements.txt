@@ -9,5 +9,7 @@ networkx
 scikit-learn
 torchvision
 python-multipart
-anthropic        
-python-dotenv 
+anthropic
+python-dotenv
+requests
+apscheduler 
