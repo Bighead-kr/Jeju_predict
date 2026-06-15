@@ -75,3 +75,33 @@ def send_trigger_alert(
         "본 메일은 자동 발송입니다."
     )
     return send_alert(subject, body)
+
+
+def send_briefing_email(
+    briefing_type: str,
+    predictions: dict,
+    weather_info: dict,
+    timestamp: Optional[str] = None,
+    to: Optional[str] = None,
+) -> bool:
+    ts = timestamp or datetime.now().strftime("%Y-%m-%d %H:%M")
+    solar = predictions.get("solar_mw", 0.0)
+    wind  = predictions.get("wind_mw",  0.0)
+    total = solar + wind
+    
+    subject = f"[제주 에너지 에이전트] {briefing_type} — {ts}"
+    body = (
+        f"■ 브리핑 유형: {briefing_type}\n"
+        f"■ 발송 시각: {ts}\n\n"
+        f"■ 금일 예측 현황\n"
+        f"  - 태양광 예측: {solar:.2f} MW\n"
+        f"  - 풍력 예측: {wind:.2f} MW\n"
+        f"  - 예상 총 발전량: {total:.2f} MW\n\n"
+        f"■ 현재 기상 상황 정보\n"
+        f"  - 기온: {weather_info.get('temp', 0.0):.1f} °C\n"
+        f"  - 풍속: {weather_info.get('wind_speed', 0.0):.1f} m/s\n"
+        f"  - 일사량: {weather_info.get('solar_rad', 0.0):.2f} MJ/m²\n\n"
+        "본 메일은 제주 신재생에너지 AI 관제 플랫폼에서 발송된 예약 브리핑 리포트입니다."
+    )
+    return send_alert(subject, body, to=to)
+

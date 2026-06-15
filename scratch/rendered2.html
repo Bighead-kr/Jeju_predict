@@ -70,6 +70,10 @@
         <span id="gsb-updated" style="color:#9ca3af;">마지막 갱신: --:--</span>
         <span style="color:#e5e7eb; margin:0 4px;">|</span>
         <span id="gsb-confidence" style="color:#9ca3af;">신뢰도: —</span>
+        <button onclick="switchTab('agent')" id="rail-toggle-btn"
+            class="ml-auto text-[9px] text-[#9ca3af] hover:text-[#374151] border border-[#e5e7eb] rounded-full px-2.5 py-0.5 bg-[#f5f6fa] transition-colors">
+            에이전트 탭 이동
+        </button>
     </div>
 
     <!-- Main Layout: canvas + agent rail -->
@@ -125,28 +129,28 @@
                         </div>
                         <!-- Agent Status Card -->
                         <div id="op-agent-card"
-                            class="theme-emerald rounded-xl p-5 flex flex-col gap-3 border transition-all duration-300">
-                            <div class="text-[9px] font-semibold uppercase tracking-widest state-title">에이전트 상태</div>
+                            class="bg-[#f0fdf4] border border-[#d1fae5] rounded-xl p-5 flex flex-col gap-3">
+                            <div class="text-[9px] font-semibold text-[#065f46] uppercase tracking-widest">에이전트 상태</div>
                             <div class="flex items-center gap-2">
                                 <span id="op-agent-dot" class="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0"
                                     style="animation:pulse-status 2s infinite;"></span>
-                                <span id="op-agent-label" class="text-sm font-bold state-label">정상 모니터링</span>
+                                <span id="op-agent-label" class="text-sm font-bold text-emerald-600">정상 모니터링</span>
                                 <span
-                                    class="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full state-badge">ACTIVE</span>
+                                    class="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600">ACTIVE</span>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mt-auto">
-                                <div class="rounded-lg p-2.5 border state-subcard">
-                                    <div class="text-[9px] uppercase tracking-wider state-title">신뢰도</div>
-                                    <div id="op-agent-conf" class="text-sm font-bold state-subtext mt-0.5">—</div>
+                                <div class="bg-white/70 rounded-lg p-2.5 border border-emerald-100">
+                                    <div class="text-[9px] text-[#065f46] uppercase tracking-wider">신뢰도</div>
+                                    <div id="op-agent-conf" class="text-sm font-bold text-emerald-600 mt-0.5">—</div>
                                 </div>
-                                <div class="rounded-lg p-2.5 border state-subcard">
-                                    <div class="text-[9px] uppercase tracking-wider state-title">갱신</div>
+                                <div class="bg-white/70 rounded-lg p-2.5 border border-emerald-100">
+                                    <div class="text-[9px] text-[#065f46] uppercase tracking-wider">갱신</div>
                                     <div id="op-agent-time" class="text-sm font-bold text-[#374151] mt-0.5 font-mono">--:--
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-[10px] border-t pt-2.5 state-border">다음 스케줄: <span
-                                    class="font-semibold state-subtext">18:00</span></div>
+                            <div class="text-[10px] text-[#065f46] border-t border-emerald-200/60 pt-2.5">다음 스케줄: <span
+                                    class="font-semibold text-emerald-600">18:00</span></div>
                         </div>
                     </div>
                 </div>
@@ -200,7 +204,8 @@
                     <!-- Row 3: Solar | Wind | Weather | Accuracy -->
                     <div class="grid grid-cols-4 gap-3">
                         <!-- Solar -->
-                        <div class="bg-white rounded-xl p-4 border border-[#e5e7eb]">
+                        <div class="bg-white rounded-xl p-4 border border-[#e5e7eb]"
+                            style="border-top:2px solid #e05a2b;">
                             <div class="flex items-center gap-1.5 mb-2">
                                 <div class="w-1.5 h-1.5 rounded-full bg-[#e05a2b]"></div>
                                 <div class="text-[9px] font-bold text-[#6b7280] uppercase tracking-widest">태양광</div>
@@ -225,7 +230,8 @@
                             <div class="text-[9px] text-[#9ca3af] mt-2.5">CNN 합성 보정값</div>
                         </div>
                         <!-- Wind -->
-                        <div class="bg-white rounded-xl p-4 border border-[#e5e7eb]">
+                        <div class="bg-white rounded-xl p-4 border border-[#e5e7eb]"
+                            style="border-top:2px solid #3b82f6;">
                             <div class="flex items-center gap-1.5 mb-2">
                                 <div class="w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></div>
                                 <div class="text-[9px] font-bold text-[#6b7280] uppercase tracking-widest">풍력</div>
@@ -292,7 +298,74 @@
                         </div>
                     </div>
 
-
+                    <!-- Row 4: Explain Panel (collapsible) -->
+                    <div class="bg-white rounded-xl overflow-hidden border border-[#e5e7eb]" id="explain-panel">
+                        <div onclick="toggleExplainPanel()"
+                            class="w-full flex justify-between items-center px-5 py-3.5 hover:bg-[#f8f8fa] transition-colors cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-bold tracking-wider text-[#6b7280] uppercase">예측 설명
+                                    에이전트</span>
+                                <span id="explain-confidence-badge"
+                                    class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#f4f4f5] text-[#9ca3af] border border-[#e5e7eb]">신뢰도
+                                    -</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="event.stopPropagation(); runExplainAgent()"
+                                    class="text-[9px] font-semibold bg-[#f4f4f5] text-[#6b7280] border border-[#e5e7eb] px-2.5 py-1 rounded-full hover:bg-[#ebebeb] transition-all">↻
+                                    재분석</button>
+                                <span id="explain-panel-chevron" class="text-[#9ca3af] text-xs select-none">▼</span>
+                            </div>
+                        </div>
+                        <div id="explain-panel-body" class="hidden border-t border-[#e5e7eb] p-5 space-y-3">
+                            <div id="explain-refinement-box"
+                                class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] font-bold text-amber-700 uppercase tracking-wider">🔁 자율
+                                        재예측</span>
+                                    <span class="text-[9px] text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">Low
+                                        Confidence</span>
+                                </div>
+                                <p id="explain-refinement-reason" class="text-[10px] text-amber-700 leading-relaxed">
+                                </p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-white border border-amber-200 rounded-lg p-2">
+                                        <span class="text-[9px] text-amber-600 block">☀️ 태양광 범위</span>
+                                        <span id="explain-solar-range" class="text-xs font-bold text-amber-800">- ~ -
+                                            MW</span>
+                                    </div>
+                                    <div class="bg-white border border-amber-200 rounded-lg p-2">
+                                        <span class="text-[9px] text-amber-600 block">💨 풍력 범위</span>
+                                        <span id="explain-wind-range" class="text-xs font-bold text-amber-800">- ~ -
+                                            MW</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="explain-vars-box" class="hidden space-y-2">
+                                <span class="text-[9px] font-bold text-[#6b7280] uppercase tracking-wider block">주요 영향 변수
+                                    Top 5</span>
+                                <div id="explain-vars-list" class="space-y-1.5"></div>
+                            </div>
+                            <div id="explain-rag-box" class="hidden bg-[#f8f8fa] border border-[#e5e7eb] rounded-xl p-3">
+                                <span class="text-[9px] font-bold text-[#9ca3af] uppercase tracking-wider block mb-1">RAG
+                                    유사 사례</span>
+                                <p id="explain-rag-text" class="text-[10px] text-[#6b7280] leading-relaxed"></p>
+                            </div>
+                            <div id="explain-kg-box" class="hidden space-y-1.5">
+                                <span class="text-[9px] font-bold text-[#9ca3af] uppercase tracking-wider block">물리
+                                    규칙</span>
+                                <div id="explain-kg-list" class="space-y-1"></div>
+                            </div>
+                            <div id="explain-narrative-box"
+                                class="hidden bg-[#f8f8fa] border border-[#e5e7eb] rounded-xl p-3">
+                                <span class="text-[9px] font-bold text-[#9ca3af] uppercase tracking-wider block mb-2">종합
+                                    설명</span>
+                                <p id="explain-narrative-text"
+                                    class="text-[10px] text-[#6b7280] leading-relaxed whitespace-pre-line"></p>
+                            </div>
+                            <p id="explain-placeholder" class="text-xs text-[#9ca3af] italic text-center py-3">관제 실행 시 자동으로
+                                분석됩니다.</p>
+                        </div>
+                    </div>
 
                 </div>
             </div>
@@ -333,12 +406,14 @@
                             전역</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-[#f8f8fa] p-3 rounded-xl border border-[#e5e7eb]">
+                        <div class="bg-[#f8f8fa] p-3 rounded-xl border border-[#e5e7eb]"
+                            style="border-top:2px solid #e05a2b;">
                             <span class="text-[9px] text-[#9ca3af] font-bold block uppercase tracking-wider">태양광</span>
                             <span id="map-info-solar-val" class="text-lg font-bold text-[#111] mt-1 block"
                                 style="letter-spacing:-0.02em;">- MW</span>
                         </div>
-                        <div class="bg-[#f8f8fa] p-3 rounded-xl border border-[#e5e7eb]">
+                        <div class="bg-[#f8f8fa] p-3 rounded-xl border border-[#e5e7eb]"
+                            style="border-top:2px solid #3b82f6;">
                             <span class="text-[9px] text-[#9ca3af] font-bold block uppercase tracking-wider">풍력</span>
                             <span id="map-info-wind-val" class="text-lg font-bold text-[#111] mt-1 block"
                                 style="letter-spacing:-0.02em;">- MW</span>
@@ -399,13 +474,11 @@
                         <span class="px-3 py-1.5 font-bold text-sm text-[#374151]" id="cal-month-display">6월 (June)</span>
                         <button onclick="nextMonth()"
                             class="w-7 h-7 rounded-lg bg-white border border-[#e5e7eb] hover:bg-[#f4f4f5] transition-all font-bold text-[#6b7280] text-xs flex items-center justify-center">▶</button>
-                        <div class="relative">
-                            <input type="date" id="cal-jump-date" class="absolute opacity-0 pointer-events-none w-full h-full left-0 top-0" onchange="jumpToDate(this.value)">
-                            <button onclick="document.getElementById('cal-jump-date').showPicker()"
-                                class="text-[10px] border border-[#e5e7eb] rounded-lg px-3 py-1.5 text-[#6b7280] hover:text-[#374151] hover:border-[#d1d5db] transition-all flex items-center gap-1.5 font-medium bg-white">
-                                📅 날짜 이동
-                            </button>
-                        </div>
+                        <input type="date" id="cal-jump-date" class="hidden" onchange="jumpToDate(this.value)">
+                        <button onclick="document.getElementById('cal-jump-date').showPicker()"
+                            class="text-[10px] border border-[#e5e7eb] rounded-lg px-3 py-1.5 text-[#6b7280] hover:text-[#374151] hover:border-[#d1d5db] transition-all flex items-center gap-1.5 font-medium bg-white">
+                            📅 날짜 이동
+                        </button>
                     </div>
                 </div>
 
@@ -423,18 +496,18 @@
                     <div>
                         <div class="text-[9px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-2">현재 상태</div>
                         <div id="rail-status-card"
-                            class="theme-emerald rounded-xl p-3 space-y-1.5 border transition-all duration-300">
+                            class="bg-[#f0fdf4] border border-[#d1fae5] rounded-xl p-3 space-y-1.5">
                             <div class="flex items-center gap-2">
                                 <span id="rail-dot" class="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                                <span id="rail-status-label" class="text-xs font-semibold state-label">정상
+                                <span id="rail-status-label" class="text-xs font-semibold text-emerald-600">정상
                                     모니터링</span>
                                 <span
-                                    class="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full state-badge">ACTIVE</span>
+                                    class="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600">ACTIVE</span>
                             </div>
-                            <div class="text-[10px]">신뢰도: <span id="rail-confidence"
-                                    class="font-semibold state-subtext">—</span></div>
-                            <div class="text-[10px]">총 발전량: <span id="rail-total-gen"
-                                    class="font-semibold state-subtext">— MW</span></div>
+                            <div class="text-[10px] text-[#065f46]">신뢰도: <span id="rail-confidence"
+                                    class="font-semibold text-emerald-600">—</span></div>
+                            <div class="text-[10px] text-[#065f46]">총 발전량: <span id="rail-total-gen"
+                                    class="font-semibold text-emerald-600">— MW</span></div>
                         </div>
                     </div>
 
@@ -468,31 +541,13 @@
                     <!-- Section 4: 예약 브리핑 -->
                     <div>
                         <div class="text-[9px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-2">예약 브리핑</div>
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between text-[10px] text-[#6b7280]">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-emerald-500 text-[9px]">●</span>
-                                    <span>매일 06:00 — 일출 전 예측 브리핑</span>
-                                </div>
-                                <button onclick="sendTestBriefingEmail('일출 전 예측 브리핑', this)" 
-                                    class="text-[8px] bg-[#e05a2b] hover:bg-[#c94d22] text-white px-1.5 py-0.5 rounded transition-all flex-shrink-0 font-semibold shadow-sm">
-                                    테스트
-                                </button>
-                            </div>
-                            <div class="flex items-center justify-between text-[10px] text-[#6b7280]">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-emerald-500 text-[9px]">●</span>
-                                    <span>매일 12:00 — 주간 피크 점검</span>
-                                </div>
-                                <button onclick="sendTestBriefingEmail('주간 피크 점검', this)" 
-                                    class="text-[8px] bg-[#e05a2b] hover:bg-[#c94d22] text-white px-1.5 py-0.5 rounded transition-all flex-shrink-0 font-semibold shadow-sm">
-                                    테스트
-                                </button>
-                            </div>
-                            <div class="flex items-center gap-2 text-[10px] text-[#aaa] opacity-60">
-                                <span class="text-[9px]">○</span>
-                                <span class="line-through">매일 18:00 — 야간 풍력</span>
-                            </div>
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-2 text-[10px] text-[#6b7280]"><span
+                                    class="text-emerald-500 text-[9px]">●</span> 매일 06:00 — 일출 전 예측 브리핑</div>
+                            <div class="flex items-center gap-2 text-[10px] text-[#6b7280]"><span
+                                    class="text-emerald-500 text-[9px]">●</span> 매일 12:00 — 주간 피크 점검</div>
+                            <div class="flex items-center gap-2 text-[10px] text-[#aaa] opacity-60"><span
+                                    class="text-[9px]">○</span> <span class="line-through">매일 18:00 — 야간 풍력</span></div>
                         </div>
                     </div>
                 </div>

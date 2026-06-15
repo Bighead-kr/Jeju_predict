@@ -61,7 +61,7 @@ class JejuPredictAgent:
         except Exception as e:
             print(f"Warning: Scalers could not be loaded: {e}")
 
-    def run_pipeline(self, current_window, timestamp=None):
+    def run_pipeline(self, current_window, timestamp=None, skip_rag_kg=False):
         """
         current_window: (24, 9) 차원의 기상 데이터 시퀀스 (Numpy Array, Raw Scale)
         timestamp: 현재 예측하려는 시점의 타임스탬프 (Optional)
@@ -130,7 +130,7 @@ class JejuPredictAgent:
         # 풍속 제약: 풍속이 3m/s 미만(Cut-in) 또는 25m/s 초과(Cut-out) 이탈 시 풍력 발전량 ≈ 0
         if wind_speed_val < 3.0 or wind_speed_val > 25.0:
             wind_pred = 0.0
-
+ 
         # 3. 트리거 판단 및 RAG/KG 검색 실행
         # 트리거 조건: 전운량(index 6) 3시간 내 변화폭 >= 5 OR 풍속 > 18m/s OR 기압(index 5) 3시간 내 변화 > 3hPa
         trigger_active = False
@@ -150,12 +150,12 @@ class JejuPredictAgent:
             if pressure_diff >= 3.0:
                 trigger_active = True
                 warnings.append("기압 급변 탐지 (저기압/태풍 접근 가능성)")
-
+ 
         # 4. RAG 및 KG 검색
         similar_cases = []
         kg_context = {"events": [], "rules": []}
         
-        if trigger_active or timestamp is not None:
+        if not skip_rag_kg and (trigger_active or timestamp is not None):
             # FAISS 검색을 위해 스케일링된 flat 벡터(1, 216) 생성
             flat_vector = current_window_scaled.reshape(1, -1)
             similar_cases = self.rag_service.get_similar_cases(flat_vector, top_k=3)
@@ -163,14 +163,14 @@ class JejuPredictAgent:
             if similar_cases:
                 target_ts = similar_cases[0]["timestamp"]
                 kg_context = self.kg_service.query_similar_events(target_ts)
-
+ 
         # 5. 종합 신뢰도 판정
         confidence = "High"
         if len(warnings) > 0:
             confidence = "Medium"
-        if len(warnings) >= 2 or (similar_cases and similar_cases[0]["distance"] > 10.0):
+        if len(warnings) >= 2 or (not skip_rag_kg and similar_cases and similar_cases[0]["distance"] > 10.0):
             confidence = "Low"
-
+ 
         # 6. 최종 에이전트 분석 리포트 생성 (LLM 미사용)
         report = {
             "predictions": {
@@ -185,10 +185,10 @@ class JejuPredictAgent:
         }
         
         return report
-
+ 
     # ── #1 자율 재예측 루프 (Self-Refinement) ────────────────────────────────
-
-    def run_pipeline_with_refinement(self, current_window: np.ndarray, timestamp=None) -> dict:
+ 
+    def run_pipeline_with_refinement(self, current_window: np.ndarray, timestamp=None, skip_rag_kg=False) -> dict:
         """
         기본 파이프라인 실행 후 신뢰도(confidence)가 'Low'인 경우:
           1) 윈도우를 3시간 전 슬라이딩으로 재예측
@@ -196,26 +196,26 @@ class JejuPredictAgent:
           3) refined_report 키를 결과에 포함하여 반환
         """
         # 1차 예측
-        report = self.run_pipeline(current_window, timestamp=timestamp)
-
+        report = self.run_pipeline(current_window, timestamp=timestamp, skip_rag_kg=skip_rag_kg)
+ 
         # 신뢰도 High/Medium이면 재예측 불필요
         if report["confidence"] in ("High", "Medium"):
             report["refined_report"] = None
             return report
-
+ 
         # ── 재예측 시도 ──────────────────────────────────────────────────────
         refinement_reason_parts = []
         refinement_reason_parts.append(
             f"신뢰도 Low 감지 (경고 {len(report['warnings'])}건). "
             "3시간 전 윈도우로 자율 재예측을 수행합니다."
         )
-
+ 
         # 3시간 전 기상 데이터로 재구성 (윈도우를 3 타임스텝 뒤로 밀고 앞은 복제)
         window_shifted = np.roll(current_window, shift=3, axis=0)
         window_shifted[:3] = current_window[0]  # 앞부분 경계값으로 채움
-
-        report_shifted = self.run_pipeline(window_shifted, timestamp=timestamp)
-
+ 
+        report_shifted = self.run_pipeline(window_shifted, timestamp=timestamp, skip_rag_kg=skip_rag_kg)
+ 
         # ── 앙상블 및 불확실성 범위 계산 ───────────────────────────────────
         solar_vals = sorted([
             report["predictions"]["solar_mw"],
@@ -225,13 +225,13 @@ class JejuPredictAgent:
             report["predictions"]["wind_mw"],
             report_shifted["predictions"]["wind_mw"],
         ])
-
+ 
         # 앙상블 평균을 주 예측값으로 갱신
         ensemble_solar = float(np.mean(solar_vals))
         ensemble_wind = float(np.mean(wind_vals))
         report["predictions"]["solar_mw"] = round(ensemble_solar, 2)
         report["predictions"]["wind_mw"] = round(ensemble_wind, 2)
-
+ 
         refined_report = {
             "refinement_applied": True,
             "refinement_reason": " ".join(refinement_reason_parts),
@@ -254,6 +254,6 @@ class JejuPredictAgent:
             "ensemble_solar_mw": round(ensemble_solar, 2),
             "ensemble_wind_mw": round(ensemble_wind, 2),
         }
-
+ 
         report["refined_report"] = refined_report
         return report

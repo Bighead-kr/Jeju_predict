@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "timestamp": "2026-06-15T18:00:00",
+    "type": "info",
+    "reason": "정시 예측 완료",
+    "action": "scheduled_prediction",
+    "prediction_after": {
+      "solar_mw": 0.0,
+      "wind_mw": 92.34524536132812
+    }
+  },
+  {
+    "timestamp": "2026-06-15T18:08:08",
+    "type": "alert",
+    "reason": "2026-06-07 기압 급변 및 전운량 급변 탐지 - 저기압/태풍 접근 가능성 및 전선 접근 가능성으로 09:00, 12:00, 15:00, 18:00 시간대 발전량 예측 신뢰도 Medium으로 저하. 운영자 주의 요망.",
+    "action": "agent_triggered",
+    "prediction_after": {
+      "solar_mw": 0.0,
+      "wind_mw": 126.59147644042969
+    }
+  }
+]

@@ -255,7 +255,7 @@ class AgenticChatService:
         for _ in range(6):
             try:
                 response = _claude.messages.create(
-                    model=MODEL, max_tokens=800,
+                    model=MODEL, max_tokens=2000,
                     system=system, tools=TOOLS, messages=messages
                 )
             except Exception as e:
@@ -348,7 +348,7 @@ class AgenticChatService:
             }, ensure_ascii=False)
 
         elif name == "tool_rag_search":
-            window = state.get("window") or self._build_window(timestamp)
+            window = state.get("window") if state.get("window") is not None else self._build_window(timestamp)
             cases, t = self._tool_rag(window)
             trace.append(t)
             if state.get("report"):
@@ -371,7 +371,7 @@ class AgenticChatService:
             }, ensure_ascii=False)
 
         elif name == "tool_explain":
-            window = state.get("window") or self._build_window(timestamp)
+            window = state.get("window") if state.get("window") is not None else self._build_window(timestamp)
             report = state.get("report")
             if not report:
                 return json.dumps({"status": "error",
@@ -416,7 +416,7 @@ class AgenticChatService:
             }, ensure_ascii=False)
 
         elif name == "tool_validate":
-            window = state.get("window") or self._build_window(timestamp)
+            window = state.get("window") if state.get("window") is not None else self._build_window(timestamp)
             report = state.get("report")
             if not report:
                 return json.dumps({"status": "error",
@@ -519,8 +519,23 @@ class AgenticChatService:
 
     def _tool_kg(self, timestamp: str):
         try:
-            r = self.agent.kg_service.query_similar_events(timestamp)
-            return r, {"tool": "tool_kg", "status": "ok"}
+            # 1. 지식 그래프에 노드가 직접 존재하는 경우 (과거 시점 등) -> 바로 조회
+            if self.agent.kg_service.graph is not None and self.agent.kg_service.graph.has_node(timestamp):
+                r = self.agent.kg_service.query_similar_events(timestamp)
+                return r, {"tool": "tool_kg", "status": "ok", "mode": "direct"}
+            
+            # 2. 노드가 없는 경우 (미래/가상 시점 등) -> RAG 기반 유사 날짜 매핑 후 KG 조회
+            window = self._build_window(timestamp)
+            scaled_window = self.agent.feature_scaler.transform(window) if self.agent.feature_scaler else window.copy()
+            flat_vector = scaled_window.reshape(1, -1)
+            similar_cases = self.agent.rag_service.get_similar_cases(flat_vector, top_k=1)
+            
+            if similar_cases:
+                target_ts = similar_cases[0]["timestamp"]
+                r = self.agent.kg_service.query_similar_events(target_ts)
+                return r, {"tool": "tool_kg", "status": "ok", "mode": "hybrid", "mapped_timestamp": target_ts}
+            
+            return {"events": [], "rules": []}, {"tool": "tool_kg", "status": "ok", "mode": "fallback_empty"}
         except Exception as e:
             return {"events": [], "rules": []}, {"tool": "tool_kg", "status": "error", "error": str(e)}
 
@@ -565,12 +580,55 @@ class AgenticChatService:
                 dt = datetime.strptime(timestamp[:10], "%Y-%m-%d")
             except Exception:
                 dt = datetime.now()
+
+        # ── RAG 기반 날씨 매핑 (과거의 동등 계절/시간 날씨를 FAISS에서 역복원) ──
+        try:
+            rag = self.agent.rag_service
+            if rag.index is not None and rag.metadata is not None:
+                meta_df = pd.DataFrame(rag.metadata)
+                meta_df['dt'] = pd.to_datetime(meta_df['timestamp'])
+                
+                # 동일 월(month) & 동일 시간(hour) 필터링
+                matches = meta_df[(meta_df['dt'].dt.month == dt.month) & (meta_df['dt'].dt.hour == dt.hour)]
+                
+                if not matches.empty:
+                    # 결정론적 무작위성(해시 시드 고정)으로 과거 시점 하나를 선택
+                    rng = np.random.default_rng(int(hashlib.md5(timestamp.encode()).hexdigest(), 16) % 10000)
+                    chosen_idx = rng.choice(matches.index)
+                    
+                    # FAISS 인덱스에서 매칭된 과거 기상 벡터(216차원) 추출
+                    vector_scaled = rag.index.reconstruct(int(chosen_idx))
+                    vector_scaled_2d = vector_scaled.reshape(24, 9)
+                    
+                    # 피처 스케일러 역변환으로 원본 스케일 기상 데이터 복원
+                    if self.agent.feature_scaler is not None:
+                        vector_raw = self.agent.feature_scaler.inverse_transform(vector_scaled_2d)
+                    else:
+                        vector_raw = vector_scaled_2d
+                    
+                    print(f"[RAG-Weather] {timestamp} 날씨를 과거 {meta_df.loc[chosen_idx, 'timestamp']} 실제 기상 데이터로 매핑했습니다.")
+                    return np.array(vector_raw, dtype=np.float32)
+        except Exception as e:
+            print(f"[RAG-Weather] RAG 날씨 매핑 실패 ({e}). 기본 수학 공식 폴백을 작동합니다.")
+
+        # RAG 실패 시 최종 폴백용 수학 공식 시뮬레이터
         rng = np.random.default_rng(int(hashlib.md5(timestamp.encode()).hexdigest(), 16) % 10000)
+        SUNRISE_SUNSET_HOURS = {
+            1: (7, 18), 2: (7, 19), 3: (6, 19), 4: (5, 19),
+            5: (5, 20), 6: (5, 20), 7: (5, 20), 8: (5, 20),
+            9: (6, 19), 10: (6, 19), 11: (7, 18), 12: (7, 18)
+        }
         rows = []
         for i in range(24):
-            th = (dt.hour - 23 + i) % 24
-            if 6 <= th <= 18:
-                sun = float(np.clip(math.sin(math.pi * (th - 6) / 12) * 0.9 + rng.uniform(-0.05, 0.05), 0, 1))
+            # 24시간 윈도우 내 각 슬롯 시점의 정확한 연월일시 추출
+            slot_dt = dt - timedelta(hours=23-i)
+            s_month, s_hour = slot_dt.month, slot_dt.hour
+            th = s_hour
+            start_h, end_h = SUNRISE_SUNSET_HOURS.get(s_month, (6, 18))
+            duration = end_h - start_h
+            
+            if start_h <= s_hour <= end_h:
+                sun = float(np.clip(math.sin(math.pi * (s_hour - start_h) / duration) * 0.9 + rng.uniform(-0.05, 0.05), 0, 1))
             else:
                 sun = 0.0
             ws = float(max(0.5, rng.uniform(2, 16) + math.sin(i / 24 * math.pi * 2) * 2.5 + rng.uniform(-0.5, 0.5)))

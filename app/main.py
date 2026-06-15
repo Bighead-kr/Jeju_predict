@@ -43,6 +43,11 @@ app = FastAPI(
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 os.makedirs(TEMPLATES_DIR, exist_ok=True)
 
+# 정적 파일(static) 폴더 마운트 설정 추가
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+os.makedirs(STATIC_DIR, exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 
 # ── 요청/응답 스키마 ────────────────────────────────────────────────────────
 class WeatherInput(BaseModel):
@@ -160,8 +165,8 @@ async def get_daily_data(date: str):
         for h in range(24):
             ts = f"{date} {h:02d}:00:00"
             window = agentic_chat._build_window(ts)
-            # 자율 재예측 루프 포함한 예측 레포트 생성
-            report = agent.run_pipeline_with_refinement(window, timestamp=ts)
+            # 자율 재예측 루프 포함한 예측 레포트 생성 (RAG/KG 생략)
+            report = agent.run_pipeline_with_refinement(window, timestamp=ts, skip_rag_kg=True)
             solar = report["predictions"]["solar_mw"]
             wind = report["predictions"]["wind_mw"]
             solar_sum += solar
@@ -247,6 +252,43 @@ async def get_report(date: str):
         return report
     except ValueError:
         raise HTTPException(status_code=400, detail="날짜 형식은 YYYY-MM-DD 이어야 합니다.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.post("/api/send-briefing-email", summary="예약 브리핑 이메일 테스트 발송")
+async def send_briefing_email_endpoint(briefing_type: str = Query("일출 전 예측 브리핑")):
+    try:
+        from datetime import datetime
+        now = datetime.now()
+        ts = now.strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 현재 시점의 기상 윈도우 생성 및 예측 실행
+        window = agentic_chat._build_window(ts)
+        report = agent.run_pipeline_with_refinement(window, timestamp=ts, skip_rag_kg=True)
+        preds = report.get("predictions", {})
+        
+        # 기상 정보 추출 (window shape: 24 x 9)
+        last_row = window[-1]
+        weather_info = {
+            "wind_speed": float(last_row[0]),  # 풍속
+            "temp": float(last_row[3]),        # 기온
+            "solar_rad": float(last_row[8])    # 일사량
+        }
+        
+        from app.services import notifier
+        success = notifier.send_briefing_email(
+            briefing_type=briefing_type,
+            predictions=preds,
+            weather_info=weather_info,
+            timestamp=now.strftime("%Y-%m-%d %H:%M"),
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="이메일 전송에 실패했습니다. SMTP 설정이나 수신자 메일을 확인하세요.")
+            
+        return {"status": "ok", "message": f"'{briefing_type}' 메일이 성공적으로 발송되었습니다."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
